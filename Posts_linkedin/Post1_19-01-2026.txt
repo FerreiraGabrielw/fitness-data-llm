@@ -1,0 +1,64 @@
+EN:
+
+📊 Turning a hobby into a real end-to-end Data Engineering project (E2E)
+
+I recently started a personal project with a very clear goal:  
+turn real, day-to-day data into a professional-standard, end-to-end Data Engineering and Data Science case study.
+
+The context is simple, but powerful:
+- Real workout data (strength training + cardio)
+- Diet, body weight, and adherence data
+- Long history (since 2023)
+- Real decisions, real mistakes, real corrections
+
+The idea isn’t to “play with dashboards,” but to:
+- structure data properly
+- treat data quality seriously
+- model a relational database
+- build ETL pipelines
+- evolve into analyses, automations, and smart reports
+
+All of this with a production mindset, even though it’s a personal project.
+
+📌 Stack and concepts I’ll work on throughout the project:
+- Python (EDA, ETL)
+- Relational modeling
+- PostgreSQL (AWS)
+- Data pipelines
+- Performance analysis
+- Automation and using LLMs for reporting
+
+This is the start of an E2E journey — and I’ll document every step here.
+
+
+PT:
+
+📊 Transformando um hobby em um projeto real de Engenharia de Dados (E2E)
+
+Comecei recentemente um projeto pessoal com um objetivo bem claro:
+transformar dados reais do meu dia a dia em um case end-to-end de Engenharia e Ciência de Dados, com padrão profissional.
+
+O contexto é simples, mas poderoso:
+- Dados reais de treino (musculação + cardio)
+- Dados de dieta, peso corporal e aderência
+- Histórico longo (desde 2023)
+- Decisões reais, erros reais, correções reais
+
+A ideia não é “brincar de dashboard”, mas sim:
+- estruturar dados corretamente
+- tratar qualidade de dados de forma séria
+- modelar um banco relacional
+- criar pipelines ETL
+- evoluir para análises, automações e relatórios inteligentes
+
+Tudo isso pensando como um projeto de produção, mesmo sendo pessoal.
+
+📌 Stack e conceitos que vou trabalhar ao longo do projeto:
+- Python (EDA, ETL)
+- Modelagem relacional
+- PostgreSQL (AWS)
+- Pipelines de dados
+- Análises de performance
+- Automação e uso de LLMs para relatórios
+
+Esse é o início de uma jornada E2E — e vou documentar cada etapa por aqui.
