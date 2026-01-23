@@ -1,12 +1,7 @@
 # fitness-data-api-llm
 Hevy API + Nutrition Data + LLM
 
-Perfeito. Então vamos fazer isso **do jeito certo, organizado e executável** — como um projeto E2E real, não como “notebook solto”.
-
-Abaixo está o **PASSO A PASSO COMPLETO DO PROJETO**, em **ordem lógica**, com checkpoints claros.
-Você pode literalmente usar isso como **README master** do repositório.
-
----
+--
 
 # 📌 Roadmap E2E — *fitness-data-platform*
 
