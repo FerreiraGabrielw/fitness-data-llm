@@ -1,0 +1,55 @@
+EN:
+🔹 POST 4 -- RELATIONAL MODELING (From CSV to database)
+
+After validating data quality, the next step was designing the data model.
+The raw data came as a single CSV where:
+
+* Each row = one set
+* Workouts, exercises, and sessions were all mixed together
+
+Instead of keeping everything flat, I designed a normalized relational model, separating concerns clearly:
+
+* workouts: training sessions
+* exercises: unique exercises
+* workout_exercises: exercises inside a specific workout (order + supersets)
+* sets: the most granular level (each performed set)
+
+This structure allows:
+
+* Correct aggregations
+* Reliable joins
+* Future analytics without rework
+* Scalability when new data sources (API, diet, adherence) are added
+
+The goal wasn't academic normalization -- it was building a schema that actually supports analytics and production use. Once the model was defined, it was implemented in PostgreSQL on AWS (RDS) and validated step by step.
+
+Data engineering really starts when structure becomes intentional.
+
+---
+
+PT:
+ 🔹POST 4 -- MODELAGEM RELACIONAL (Do CSV ao banco)
+
+Depois de validar a qualidade dos dados, o próximo passo foi desenhar o modelo de dados.
+Os dados brutos vinham em um único CSV onde:
+
+* Cada linha = uma série
+* Treinos, exercícios e sessões estavam todos misturados
+
+Em vez de manter tudo "achatado", optei por um modelo relacional normalizado, separando responsabilidades:
+
+* workouts: sessões de treino
+* exercises: exercícios únicos
+* workout_exercises: exercícios dentro de um treino específico (ordem + supersets)
+* sets: nível mais granular (cada série realizada)
+
+Esse modelo permite:
+
+* Agregações corretas
+* Joins confiáveis
+* Evolução analítica sem retrabalho
+* Escalabilidade para novas fontes (API, dieta, aderência)
+
+O objetivo não foi normalização acadêmica, mas sim um schema que funciona para analytics e produção. Com o modelo definido, ele foi implementado em PostgreSQL na AWS (RDS) e validado passo a passo.
+
+Engenharia de dados começa quando a estrutura deixa de ser acidental.

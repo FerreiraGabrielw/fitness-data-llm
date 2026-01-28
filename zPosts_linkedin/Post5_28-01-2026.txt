@@ -1,0 +1,57 @@
+EN:
+POST 5 -- BUILDING THE ETL PIPELINE (Idempotence matters)
+
+With the database model in place, it was time to build the ETL pipeline. The key rule I followed: Running the pipeline twice should never duplicate data.
+
+Each ETL step was designed to be idempotent, respecting:
+
+* Data granularity
+* Logical uniqueness
+* Referential integrity
+
+The pipeline loads data in a clear order:
+
+1. Exercises
+2. Workouts
+3. Workout-exercise relationships
+4. Sets (most granular level)
+
+All of this was implemented in Python (Pandas + SQLAlchemy), loading into PostgreSQL on AWS.
+
+Why this matters:
+
+* Reprocessing is safe
+* Failures are recoverable
+* Pipelines behave predictably
+* The system feels closer to production than a demo
+
+At this point, the project already had thousands of records, full relational integrity, and clean separation between raw and structured data. This is where a CSV truly becomes a data platform.
+
+PT:
+POST 5 -- CONSTRUINDO O PIPELINE ETL (Idempotência importa)
+
+Com o modelo de dados pronto, chegou a hora de construir o pipeline ETL. A regra principal foi: Rodar o pipeline duas vezes não pode duplicar dados.
+
+Cada etapa do ETL foi desenhada para ser idempotente, respeitando:
+
+* A granularidade dos dados
+* Unicidade lógica
+* Integridade referencial
+
+A carga segue uma ordem clara:
+
+1. Exercícios
+2. Treinos
+3. Relação treino-exercício
+4. Séries (nível mais granular)
+
+Tudo implementado em Python (Pandas + SQLAlchemy), carregando em PostgreSQL na AWS.
+
+Por que isso é importante:
+
+* Reprocessamento seguro
+* Falhas fáceis de corrigir
+* Comportamento previsível
+* Sensação de pipeline de produção, não de demo
+
+Nesse ponto, o projeto já tinha milhares de registros, integridade relacional completa e separação clara entre dado cru e estruturado. Aqui o CSV vira, de fato, uma plataforma de dados.

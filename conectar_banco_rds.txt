@@ -1,0 +1,1 @@
+psql -h fitness-postgres.cpi80omwcbbo.us-east-2.rds.amazonaws.com -U postgres -d postgres
