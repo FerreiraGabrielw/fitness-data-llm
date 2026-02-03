@@ -1,0 +1,62 @@
+🔹 POST 7 — DATA GOVERNANCE BEFORE ANALYTICS
+
+Before moving into the GOLD layer, I stopped to do something that often gets skipped in portfolio projects: data governance.
+
+At this stage, the database was already populated and stable. But analytics only make sense if the semantics are correct.
+
+What was done:
+
+- Created a dedicated muscle group dimension
+- Mapped every exercise explicitly to a muscle group
+- Built an audit view to detect unmapped exercises
+- Identified a real data issue: a duplicated exercise caused by a typo
+- Consolidated historical data safely (no data loss, no broken FKs)
+- Re-ran the mapping as a fully reproducible load
+
+Key points:
+
+- No silent fixes
+- No masking errors in queries
+- Corrections applied at the right layer (Silver)
+- Referential integrity preserved at all times
+
+Result:
+
+- 100% of exercises mapped
+- Zero unmapped records
+
+Clean, auditable foundation for analytics
+
+Only after this kind of groundwork does it make sense to build metrics.
+Now the GOLD layer can be built on something solid — not assumptions.
+
+🔹 POST 7 — GOVERNANÇA DE DADOS ANTES DO ANALYTICS
+
+Antes de entrar na camada GOLD, parei para fazer algo que muita gente pula em projetos de portfólio: governança de dados.
+
+Nesse ponto, o banco já estava carregado e estável. Mas analytics só fazem sentido se a semântica estiver correta.
+
+O que foi feito:
+
+- Criação de uma dimensão dedicada de grupamentos musculares
+- Mapeamento explícito de todos os exercícios
+- View de auditoria para detectar exercícios não mapeados
+- Identificação de um problema real: exercício duplicado por erro de digitação
+- Consolidação do histórico sem perda de dados ou quebra de FK
+- Reprocessamento completo do mapeamento de forma reprodutível
+
+Pontos-chave:
+
+- Nada de correção silenciosa
+- Nada de esconder erro em query
+- Ajustes feitos na camada correta (Silver)
+- Integridade referencial mantida o tempo todo
+
+Resultado:
+
+- 100% dos exercícios mapeados
+- Zero registros órfãos
+- Base limpa e auditável para analytics
+
+Só depois desse tipo de trabalho faz sentido falar em métricas.
+Agora a camada GOLD pode ser construída sobre algo sólido — não sobre suposições.

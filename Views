@@ -1,0 +1,107 @@
+
+CREATE OR REPLACE VIEW gold_sets AS
+SELECT
+    -- chaves
+    s.set_id,
+    w.workout_id,
+    w.workout_date,
+    DATE_TRUNC('week', w.workout_date)::date AS week_start,
+
+    -- exercício
+    e.exercise_id,
+    e.exercise_name,
+
+    -- músculo
+    mg.muscle_group_name,
+
+    -- ciclo
+    c.cycle_id,
+    c.cycle_name,
+    c.cycle_type,
+
+    -- dados da série
+    s.set_index,
+    s.set_type,
+    s.weight_kg,
+    s.reps,
+    s.duration_seconds,
+
+    -- flags analíticas
+    (s.set_type = 'failure')::int AS is_failure_set
+
+FROM sets s
+JOIN workout_exercises we
+    ON s.workout_exercise_id = we.workout_exercise_id
+JOIN workouts w
+    ON we.workout_id = w.workout_id
+JOIN exercises e
+    ON we.exercise_id = e.exercise_id
+JOIN exercise_muscle_map emm
+    ON e.exercise_id = emm.exercise_id
+JOIN muscle_groups mg
+    ON emm.muscle_group_id = mg.muscle_group_id
+LEFT JOIN cycles c
+    ON w.workout_date BETWEEN c.start_date
+       AND COALESCE(c.end_date, CURRENT_DATE)
+
+ regras de exclusão
+WHERE s.set_type <> 'warmup';
+
+-- Volume semanal por grupamento
+CREATE OR REPLACE VIEW gold_weekly_muscle_volume AS
+SELECT
+    muscle_group_name,
+    week_start,
+    COUNT(*) AS total_sets
+FROM gold_sets
+WHERE muscle_group_name <> 'Cardio'
+GROUP BY muscle_group_name, week_start
+ORDER BY week_start, muscle_group_name;
+
+-- Reps médias por série
+CREATE OR REPLACE VIEW gold_avg_reps_per_set AS
+SELECT
+    muscle_group_name,
+    week_start,
+    ROUND(AVG(reps), 2) AS avg_reps
+FROM gold_sets
+WHERE reps IS NOT NULL
+GROUP BY muscle_group_name, week_start
+ORDER BY week_start, muscle_group_name;
+
+
+
+
+-- Frequência semanal por músculo
+CREATE OR REPLACE VIEW gold_muscle_frequency AS
+SELECT
+    muscle_group_name,
+    week_start,
+    COUNT(DISTINCT workout_date) AS training_days
+FROM gold_sets
+WHERE muscle_group_name <> 'Cardio'
+GROUP BY muscle_group_name, week_start
+ORDER BY week_start, muscle_group_name;
+
+--Séries até a falha
+CREATE OR REPLACE VIEW gold_failure_sets AS
+SELECT
+    muscle_group_name,
+    week_start,
+    COUNT(*) AS failure_sets
+FROM gold_sets
+WHERE is_failure_set = 1
+GROUP BY muscle_group_name, week_start
+ORDER BY week_start, muscle_group_name;
+
+--Progressão de carga por exercício
+CREATE OR REPLACE VIEW gold_exercise_load_progression AS
+SELECT
+    exercise_id,
+    exercise_name,
+    workout_date,
+    MAX(weight_kg) AS max_weight_kg
+FROM gold_sets
+WHERE weight_kg IS NOT NULL
+GROUP BY exercise_id, exercise_name, workout_date
+ORDER BY exercise_name, workout_date;
