@@ -1,4 +1,3 @@
-
 CREATE OR REPLACE VIEW gold_sets AS
 SELECT
     -- chaves
@@ -105,3 +104,22 @@ FROM gold_sets
 WHERE weight_kg IS NOT NULL
 GROUP BY exercise_id, exercise_name, workout_date
 ORDER BY exercise_name, workout_date;
+
+CREATE OR REPLACE VIEW gold_weekly_muscle_summary AS
+SELECT
+    v.muscle_group_name,
+    v.week_start,
+    v.total_sets,
+    f.training_days,
+    r.avg_reps,
+    fs.failure_sets
+FROM gold_weekly_muscle_volume v
+LEFT JOIN gold_muscle_frequency f
+  ON v.muscle_group_name = f.muscle_group_name
+ AND v.week_start = f.week_start
+LEFT JOIN gold_avg_reps_per_set r
+  ON v.muscle_group_name = r.muscle_group_name
+ AND v.week_start = r.week_start
+LEFT JOIN gold_failure_sets fs
+  ON v.muscle_group_name = fs.muscle_group_name
+ AND v.week_start = fs.week_start;

@@ -59,3 +59,25 @@ CREATE INDEX idx_workouts_date ON workouts(workout_date);
 CREATE INDEX idx_exercises_name ON exercises(exercise_name);
 CREATE INDEX idx_sets_type ON sets(set_type);
 CREATE INDEX idx_sets_workout_exercise ON sets(workout_exercise_id);
+
+-- 4. Tabela dieta
+CREATE TABLE diet_daily (
+    diet_date DATE PRIMARY KEY,
+
+    carbs_g INT,
+    protein_g INT,
+    fat_g INT,
+
+    calories_kcal INT,
+
+    cardio_weekly_min INT,
+
+    cycle_id INT
+        REFERENCES cycles(cycle_id),
+
+    bodyweight_kg NUMERIC(5,2),
+
+    notes TEXT,
+
+    created_at TIMESTAMP DEFAULT NOW()
+);
