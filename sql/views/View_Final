@@ -1,0 +1,35 @@
+CREATE OR REPLACE VIEW gold_weekly_fitness_summary AS
+WITH training_summary AS (
+    SELECT
+        week_start,
+        SUM(total_sets)        AS total_sets_week,
+        SUM(failure_sets)      AS total_failure_sets,
+        ROUND(AVG(avg_reps),2) AS avg_reps_per_set
+    FROM gold_weekly_muscle_summary
+    GROUP BY week_start
+)
+SELECT
+    d.week_start,
+
+    -- Diet
+    d.avg_calories_kcal,
+    d.avg_carbs_g,
+    d.avg_protein_g,
+    d.avg_fat_g,
+    d.avg_bodyweight_kg,
+    d.cardio_weekly_min,
+    d.logged_days,
+
+    -- Training
+    t.total_sets_week,
+    t.total_failure_sets,
+    t.avg_reps_per_set,
+
+    -- Cycle
+    c.cycle_name,
+    c.cycle_type
+FROM gold_weekly_diet_summary d
+LEFT JOIN training_summary t
+    ON d.week_start = t.week_start
+LEFT JOIN cycles c
+    ON d.cycle_id = c.cycle_id;

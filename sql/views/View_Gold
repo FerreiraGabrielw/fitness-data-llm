@@ -1,0 +1,73 @@
+CREATE OR REPLACE VIEW gold_weekly_fitness_summary AS
+WITH training_summary AS (
+    SELECT
+        DATE_TRUNC('week', w.workout_date)::date AS week_start,
+        COUNT(DISTINCT w.workout_id)             AS training_sessions,
+        COUNT(s.set_id)                          AS total_sets,
+        COUNT(*) FILTER (WHERE s.set_type = 'failure') AS failure_sets,
+        ROUND(AVG(s.reps), 2)                    AS avg_reps_per_set
+    FROM workouts w
+    JOIN workout_exercises we
+        ON w.workout_id = we.workout_id
+    JOIN sets s
+        ON we.workout_exercise_id = s.workout_exercise_id
+    WHERE s.set_type <> 'warmup'
+    GROUP BY week_start
+)
+SELECT
+    d.week_start,
+
+    -- Diet
+    d.avg_calories_kcal,
+    d.avg_carbs_g,
+    d.avg_protein_g,
+    d.avg_fat_g,
+    d.avg_bodyweight_kg,
+    d.cardio_weekly_min,
+    d.logged_days,
+
+    -- Training
+    t.training_sessions,
+    t.total_sets,
+    t.failure_sets,
+    t.avg_reps_per_set,
+
+    -- Cycle
+    c.cycle_name,
+    c.cycle_type
+FROM gold_weekly_diet_summary d
+LEFT JOIN training_summary t
+    ON d.week_start = t.week_start
+LEFT JOIN cycles c
+    ON d.cycle_id = c.cycle_id;
+
+
+CREATE OR REPLACE VIEW gold_weekly_training_detail AS
+SELECT
+    DATE_TRUNC('week', w.workout_date)::date AS week_start,
+
+    e.exercise_name,
+    mg.muscle_group_name,
+
+    COUNT(s.set_id)                          AS total_sets,
+    ROUND(AVG(s.weight_kg), 2)               AS avg_weight_kg,
+    ROUND(AVG(s.reps), 2)                    AS avg_reps,
+    MAX(s.weight_kg)                         AS max_weight_kg,
+
+    COUNT(*) FILTER (WHERE s.set_type = 'failure') AS failure_sets
+FROM workouts w
+JOIN workout_exercises we
+    ON w.workout_id = we.workout_id
+JOIN exercises e
+    ON we.exercise_id = e.exercise_id
+JOIN exercise_muscle_map emm
+    ON e.exercise_id = emm.exercise_id
+JOIN muscle_groups mg
+    ON emm.muscle_group_id = mg.muscle_group_id
+JOIN sets s
+    ON we.workout_exercise_id = s.workout_exercise_id
+WHERE s.set_type <> 'warmup'
+GROUP BY
+    week_start,
+    e.exercise_name,
+    mg.muscle_group_name;

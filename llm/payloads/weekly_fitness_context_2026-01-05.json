@@ -1,0 +1,664 @@
+{
+  "schema_version": "v1",
+  "generated_at": "2026-02-04",
+  "week_start": "2026-01-05",
+  "cycle": {
+    "cycle_name": "Cutting V",
+    "cycle_type": "cutting"
+  },
+  "diet": {
+    "avg_calories_kcal": 2024.0,
+    "avg_carbs_g": 209.0,
+    "avg_protein_g": 191.0,
+    "avg_fat_g": 47.0,
+    "cardio_weekly_min": 200,
+    "avg_bodyweight_kg": 82.53,
+    "logged_days": 7
+  },
+  "training_overview": {
+    "training_sessions": 5,
+    "total_sets": 66,
+    "failure_sets": 33,
+    "avg_reps_per_set": 6.63
+  },
+  "exercises": [
+    {
+      "exercise_id": 5,
+      "exercise_name": "Back Extension (Weighted Hyperextension)",
+      "muscle_group": "Lower Back",
+      "current_week": {
+        "total_sets": 3,
+        "total_reps": 22,
+        "avg_reps": 7.33,
+        "avg_weight_kg": 41.67,
+        "max_weight_kg": 42.5,
+        "failure_sets": 1,
+        "sessions_count": 2
+      },
+      "delta_vs_last_week": {
+        "total_sets": 1,
+        "total_reps": 9,
+        "avg_reps": 0.83,
+        "avg_weight_kg": 1.67,
+        "max_weight_kg": 2.5,
+        "failure_sets": 1
+      }
+    },
+    {
+      "exercise_id": 12,
+      "exercise_name": "Bicep Curl (Cable)",
+      "muscle_group": "Biceps",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 13,
+        "avg_reps": 6.5,
+        "avg_weight_kg": 54.0,
+        "max_weight_kg": 54.0,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": -1,
+        "avg_reps": -0.5,
+        "avg_weight_kg": 1.0,
+        "max_weight_kg": 1.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 14,
+      "exercise_name": "Bicep Curl (Machine)",
+      "muscle_group": "Biceps",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 12,
+        "avg_reps": 6.0,
+        "avg_weight_kg": 95.0,
+        "max_weight_kg": 95.0,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 1,
+        "avg_reps": 0.5,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 16,
+      "exercise_name": "Cable Fly Crossovers",
+      "muscle_group": "Chest",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 13,
+        "avg_reps": 6.5,
+        "avg_weight_kg": 27.5,
+        "max_weight_kg": 27.5,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 1,
+        "avg_reps": 0.5,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 20,
+      "exercise_name": "Chest Fly (Machine)",
+      "muscle_group": "Chest",
+      "current_week": {
+        "total_sets": 4,
+        "total_reps": 26,
+        "avg_reps": 6.5,
+        "avg_weight_kg": 131.25,
+        "max_weight_kg": 131.25,
+        "failure_sets": 2,
+        "sessions_count": 2
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 0,
+        "avg_reps": 0.0,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 26,
+      "exercise_name": "Crunch Hammer Machine",
+      "muscle_group": "Abdominals",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 14,
+        "avg_reps": 7.0,
+        "avg_weight_kg": 57.5,
+        "max_weight_kg": 57.5,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": -2,
+        "total_reps": -14,
+        "avg_reps": 0.0,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": -1
+      }
+    },
+    {
+      "exercise_id": 38,
+      "exercise_name": "Hammer Chest Dip Weighted",
+      "muscle_group": "Chest",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 13,
+        "avg_reps": 6.5,
+        "avg_weight_kg": 2.5,
+        "max_weight_kg": 2.5,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 1,
+        "avg_reps": 0.5,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 41,
+      "exercise_name": "Hammer Hip Thrust (Machine)",
+      "muscle_group": "Glutes",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 12,
+        "avg_reps": 6.0,
+        "avg_weight_kg": 140.0,
+        "max_weight_kg": 140.0,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": -2,
+        "avg_reps": -1.0,
+        "avg_weight_kg": 10.0,
+        "max_weight_kg": 10.0,
+        "failure_sets": 1
+      }
+    },
+    {
+      "exercise_id": 43,
+      "exercise_name": "Hip Adduction (Machine)",
+      "muscle_group": "Adductors",
+      "current_week": {
+        "total_sets": 3,
+        "total_reps": 16,
+        "avg_reps": 5.33,
+        "avg_weight_kg": 88.75,
+        "max_weight_kg": 90.0,
+        "failure_sets": 2,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": -1,
+        "avg_reps": -0.34,
+        "avg_weight_kg": 1.25,
+        "max_weight_kg": 0.0,
+        "failure_sets": 1
+      }
+    },
+    {
+      "exercise_id": 49,
+      "exercise_name": "Incline Chest Press (Machine)",
+      "muscle_group": "Chest",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 11,
+        "avg_reps": 5.5,
+        "avg_weight_kg": 72.5,
+        "max_weight_kg": 72.5,
+        "failure_sets": 2,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": -2,
+        "avg_reps": -1.0,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 1
+      }
+    },
+    {
+      "exercise_id": 51,
+      "exercise_name": "Iso-Lateral Front Lat Pulldown",
+      "muscle_group": "Lats",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 14,
+        "avg_reps": 7.0,
+        "avg_weight_kg": 45.0,
+        "max_weight_kg": 45.0,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 4,
+        "avg_reps": 2.0,
+        "avg_weight_kg": 5.0,
+        "max_weight_kg": 5.0,
+        "failure_sets": 1
+      }
+    },
+    {
+      "exercise_id": 53,
+      "exercise_name": "Iso-Lateral Horizontal Bench Press",
+      "muscle_group": "Chest",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 11,
+        "avg_reps": 5.5,
+        "avg_weight_kg": 80.0,
+        "max_weight_kg": 80.0,
+        "failure_sets": 2,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 1,
+        "avg_reps": 0.5,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 1
+      }
+    },
+    {
+      "exercise_id": 54,
+      "exercise_name": "Iso-Lateral Low Row",
+      "muscle_group": "Upper Back",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 14,
+        "avg_reps": 7.0,
+        "avg_weight_kg": 75.0,
+        "max_weight_kg": 75.0,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 0,
+        "avg_reps": 0.0,
+        "avg_weight_kg": 2.5,
+        "max_weight_kg": 2.5,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 60,
+      "exercise_name": "Lateral Raise (Cable)",
+      "muscle_group": "Shoulders",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 15,
+        "avg_reps": 7.5,
+        "avg_weight_kg": 14.1,
+        "max_weight_kg": 14.1,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 1,
+        "avg_reps": 0.5,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 62,
+      "exercise_name": "Lateral Raise (Machine)",
+      "muscle_group": "Shoulders",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 10,
+        "avg_reps": 5.0,
+        "avg_weight_kg": 81.0,
+        "max_weight_kg": 81.0,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 0,
+        "avg_reps": 0.0,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 59,
+      "exercise_name": "Lat Pulldown - Close Grip (Cable)",
+      "muscle_group": "Lats",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 13,
+        "avg_reps": 6.5,
+        "avg_weight_kg": 97.5,
+        "max_weight_kg": 97.5,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 0,
+        "avg_reps": 0.0,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 63,
+      "exercise_name": "Leg Extension (Machine)",
+      "muscle_group": "Quadriceps",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 17,
+        "avg_reps": 8.5,
+        "avg_weight_kg": 101.25,
+        "max_weight_kg": 101.25,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 0,
+        "avg_reps": 0.0,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 64,
+      "exercise_name": "Leg Press (Machine)",
+      "muscle_group": "Quadriceps",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 11,
+        "avg_reps": 5.5,
+        "avg_weight_kg": 280.0,
+        "max_weight_kg": 280.0,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 0,
+        "avg_reps": 0.0,
+        "avg_weight_kg": 10.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 71,
+      "exercise_name": "Preacher Curl (Machine)",
+      "muscle_group": "Biceps",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 18,
+        "avg_reps": 9.0,
+        "avg_weight_kg": 86.25,
+        "max_weight_kg": 86.25,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 0,
+        "avg_reps": 0.0,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 79,
+      "exercise_name": "Seated Cable Row - Bar Wide Grip",
+      "muscle_group": "Upper Back",
+      "current_week": {
+        "total_sets": 3,
+        "total_reps": 21,
+        "avg_reps": 7.0,
+        "avg_weight_kg": 93.75,
+        "max_weight_kg": 93.75,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 1,
+        "avg_reps": 0.33,
+        "avg_weight_kg": 3.75,
+        "max_weight_kg": 3.75,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 83,
+      "exercise_name": "Seated Leg Curl (Machine)",
+      "muscle_group": "Hamstrings",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 13,
+        "avg_reps": 6.5,
+        "avg_weight_kg": 108.0,
+        "max_weight_kg": 108.0,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 1,
+        "avg_reps": 0.5,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 85,
+      "exercise_name": "Seated Row (Machine)",
+      "muscle_group": "Upper Back",
+      "current_week": {
+        "total_sets": 3,
+        "total_reps": 17,
+        "avg_reps": 5.67,
+        "avg_weight_kg": 94.5,
+        "max_weight_kg": 103.0,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": -1,
+        "avg_reps": -0.33,
+        "avg_weight_kg": 2.17,
+        "max_weight_kg": 2.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 88,
+      "exercise_name": "Shoulder Press (Dumbbell)",
+      "muscle_group": "Shoulders",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 15,
+        "avg_reps": 7.5,
+        "avg_weight_kg": 37.5,
+        "max_weight_kg": 37.5,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 1,
+        "avg_reps": 0.5,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 97,
+      "exercise_name": "Skullcrusher (Cable)",
+      "muscle_group": "Triceps",
+      "current_week": {
+        "total_sets": 1,
+        "total_reps": 9,
+        "avg_reps": 9.0,
+        "avg_weight_kg": 64.0,
+        "max_weight_kg": 64.0,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 4,
+        "avg_reps": 4.0,
+        "avg_weight_kg": 1.0,
+        "max_weight_kg": 1.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 107,
+      "exercise_name": "Straight Leg Deadlift",
+      "muscle_group": "Hamstrings",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 14,
+        "avg_reps": 7.0,
+        "avg_weight_kg": 100.0,
+        "max_weight_kg": 100.0,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 1,
+        "avg_reps": 0.5,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 109,
+      "exercise_name": "Treadmill",
+      "muscle_group": "Cardio",
+      "current_week": {
+        "total_sets": 3,
+        "total_reps": null,
+        "avg_reps": null,
+        "avg_weight_kg": null,
+        "max_weight_kg": null,
+        "failure_sets": 0,
+        "sessions_count": 3
+      },
+      "delta_vs_last_week": {
+        "total_sets": 1,
+        "total_reps": null,
+        "avg_reps": null,
+        "avg_weight_kg": null,
+        "max_weight_kg": null,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 110,
+      "exercise_name": "Triceps Extension (Cable)",
+      "muscle_group": "Triceps",
+      "current_week": {
+        "total_sets": 3,
+        "total_reps": 19,
+        "avg_reps": 6.33,
+        "avg_weight_kg": 21.9,
+        "max_weight_kg": 21.9,
+        "failure_sets": 2,
+        "sessions_count": 2
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 2,
+        "avg_reps": 0.66,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    },
+    {
+      "exercise_id": 113,
+      "exercise_name": "Unilateral Calf Extension (Machine)",
+      "muscle_group": "Calves",
+      "current_week": {
+        "total_sets": 2,
+        "total_reps": 16,
+        "avg_reps": 8.0,
+        "avg_weight_kg": 52.5,
+        "max_weight_kg": 52.5,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": null,
+        "total_reps": null,
+        "avg_reps": null,
+        "avg_weight_kg": null,
+        "max_weight_kg": null,
+        "failure_sets": null
+      }
+    },
+    {
+      "exercise_id": 117,
+      "exercise_name": "Unilateral Row (cable)",
+      "muscle_group": "Upper Back",
+      "current_week": {
+        "total_sets": 3,
+        "total_reps": 19,
+        "avg_reps": 6.33,
+        "avg_weight_kg": 52.5,
+        "max_weight_kg": 56.25,
+        "failure_sets": 1,
+        "sessions_count": 1
+      },
+      "delta_vs_last_week": {
+        "total_sets": 0,
+        "total_reps": 1,
+        "avg_reps": 0.33,
+        "avg_weight_kg": 0.0,
+        "max_weight_kg": 0.0,
+        "failure_sets": 0
+      }
+    }
+  ]
+}

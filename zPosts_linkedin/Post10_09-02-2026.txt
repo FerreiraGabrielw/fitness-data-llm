@@ -1,0 +1,70 @@
+🔹 POST 10 — PREPARING DATA FOR LLM CONSUMPTION
+
+EN:
+
+One of the goals of this project is to generate weekly performance reports using a language model.
+
+But LLMs don’t fix bad data.
+They amplify it.
+
+Before plugging anything into a model, the data needed to be:
+
+- Consistent across weeks
+- Comparable by design
+- Free of mixed semantics
+- Explicit in its relationships
+
+That’s why the GOLD layer was built with:
+
+- Stable weekly anchors
+- Clear separation of context vs detail
+- No inferred metrics
+- No hidden assumptions
+
+This allows the LLM to:
+
+- Compare weeks safely
+- Detect progression or regression
+- Relate training output to diet and cycle
+- Generate insights instead of hallucinations
+
+LLMs are powerful — but only if the data is engineered for them.
+
+Good prompts help.
+
+Good data structures matter more.
+
+
+PT:
+
+Um dos objetivos do projeto é gerar --relatórios semanais de desempenho usando um modelo de linguagem--.
+
+Mas LLMs não corrigem dados ruins.
+Eles amplificam.
+
+Antes de conectar qualquer modelo, os dados precisavam ser:
+
+- Consistentes ao longo do tempo
+- Comparáveis por construção
+- Livres de semântica misturada
+- Explícitos em suas relações
+
+Por isso, a camada GOLD foi desenhada com:
+
+- Âncoras semanais estáveis
+- Separação clara entre contexto e detalhe
+- Nenhuma métrica inferida
+- Nenhuma suposição escondida
+
+Isso permite que o LLM:
+
+- Compare semanas com segurança
+- Detecte evolução ou regressão
+- Relacione treino, dieta e ciclo
+- Gere insights — não alucinações
+
+LLMs são poderosos.
+Mas só funcionam bem quando os dados foram pensados para eles.
+
+Bons prompts ajudam.
+Boa engenharia de dados é indispensável.

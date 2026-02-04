@@ -1,0 +1,47 @@
+{
+  "week_start": "YYYY-MM-DD",
+  "cycle": {
+    "cycle_id": "int",
+    "cycle_name": "string",
+    "cycle_type": "cutting | bulking | maintenance | reverse"
+  },
+  "diet": {
+    "avg_calories_kcal": "number",
+    "avg_carbs_g": "number",
+    "avg_protein_g": "number",
+    "avg_fat_g": "number",
+    "cardio_weekly_min": "number",
+    "avg_bodyweight_kg": "number",
+    "logged_days": "int"
+  },
+  "training_overview": {
+    "training_sessions": "int",
+    "total_sets": "int",
+    "failure_sets": "int",
+    "avg_reps_per_set": "number"
+  },
+  "exercises": [
+    {
+      "exercise_id": "int",
+      "exercise_name": "string",
+      "muscle_group": "string",
+      "current_week": {
+        "total_sets": "int",
+        "total_reps": "int",
+        "avg_reps": "number",
+        "avg_weight_kg": "number",
+        "max_weight_kg": "number",
+        "failure_sets": "int",
+        "sessions_count": "int"
+      },
+      "delta_vs_last_week": {
+        "total_sets": "int",
+        "total_reps": "int",
+        "avg_reps": "number",
+        "avg_weight_kg": "number",
+        "max_weight_kg": "number",
+        "failure_sets": "int"
+      }
+    }
+  ]
+}

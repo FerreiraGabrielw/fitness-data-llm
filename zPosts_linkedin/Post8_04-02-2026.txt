@@ -1,0 +1,67 @@
+🔹 POST 8 — FROM SILVER TO GOLD (Separating signal from noise)
+
+EN:
+
+With data governance in place, the next step was building the GOLD layer.
+But before writing a single metric, one question had to be answered:
+
+> What level of aggregation actually makes sense?
+
+Instead of jumping straight into dashboards, I designed the GOLD layer around --semantic intent--, not convenience.
+
+What this meant in practice:
+
+Weekly aggregation as the primary analytical grain
+Clear separation between:
+
+  - Contextual summaries (week-level)
+  - Operational detail (exercise-level)
+
+- No mixing of granularities in the same view
+
+The result was a GOLD layer with --two complementary perspectives--:
+
+- A weekly fitness summary (diet + training context)
+- A granular training detail view (exercise, load, reps, failure)
+
+Why this matters:
+
+- Metrics are interpretable
+- Comparisons across weeks are valid
+- Downstream consumers (analytics, ML, LLMs) receive clean semantics
+
+GOLD is not about “more metrics”.
+It’s about --the right abstractions--.
+
+
+PT:
+
+Com a governança de dados resolvida, o próximo passo foi construir a camada GOLD.
+Mas antes de criar qualquer métrica, uma pergunta precisava ser respondida:
+
+> Qual nível de agregação realmente faz sentido?
+
+Em vez de partir direto para gráficos, a camada GOLD foi desenhada com base em --intenção semântica--, não conveniência.
+
+Na prática, isso significou:
+
+- Agregação semanal como granularidade principal
+- Separação clara entre:
+
+  - Resumos contextuais (nível semanal)
+  - Detalhe operacional (nível de exercício)
+- Nenhuma mistura de granularidades na mesma view
+
+O resultado foi uma GOLD com --duas visões complementares--:
+
+- Um resumo semanal de treino + dieta
+- Um detalhe granular de treino (exercício, carga, repetições, falha)
+
+Por que isso importa:
+
+- Métricas interpretáveis
+- Comparações semana a semana corretas
+- Consumo limpo por analytics, ML e LLMs
+
+GOLD não é sobre ter mais métricas.
+É sobre --abstrações corretas--.

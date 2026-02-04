@@ -1,0 +1,78 @@
+🔹 POST 9 — DESIGNING DATA FOR REASONING (Not just reporting)
+
+EN:
+
+At this stage, the project stopped being “analytics-first” and became --reasoning-first--.
+
+The goal was no longer just answering:
+
+- “What happened?”
+
+But enabling answers to:
+
+- “Am I progressing?”
+- “What changed compared to last week?”
+- “Is performance aligned with diet and training load?”
+
+To support this, the data model had to expose:
+
+- Exercise-level progression (load, reps, volume)
+- Failure intensity (sets to failure)
+- Muscle-level aggregation
+- Weekly context (diet, bodyweight, cycle)
+
+This required resisting a common mistake:
+
+> Flattening everything into one massive table.
+
+Instead:
+
+- Summary and detail were modeled separately
+- Relationships remained explicit
+- Comparisons became first-class operations
+
+This is the difference between:
+
+- A dashboard-friendly dataset
+- And a dataset that --supports reasoning--
+
+If a model (or a human) can’t reason over the data, the structure is wrong.
+
+
+PT:
+
+Nesse ponto, o projeto deixou de ser apenas “analytics-first” e passou a ser reasoning-first.
+
+O objetivo não era mais só responder:
+
+- “O que aconteceu?”
+
+Mas permitir perguntas como:
+
+- “Estou evoluindo?”
+- “O que mudou em relação à semana passada?”
+- “Meu desempenho está alinhado com dieta e carga de treino?”
+
+Para isso, o modelo precisava expor:
+
+- Progressão por exercício (carga, reps, volume)
+- Intensidade (séries até a falha)
+- Agregação por grupamento muscular
+- Contexto semanal (dieta, peso, ciclo)
+
+Isso exigiu evitar um erro comum:
+
+> Achatar tudo em uma tabela gigante.
+
+Em vez disso:
+
+- Resumo e detalhe foram modelados separadamente
+- Relações continuaram explícitas
+- Comparações viraram parte do design
+
+Essa é a diferença entre:
+
+- Um dataset bom para dashboard
+- E um dataset que --permite raciocínio
+
+Se nem um humano nem um modelo conseguem raciocinar sobre os dados, o problema é estrutural.
