@@ -26,32 +26,29 @@ The objective was to design a production-style analytical data system capable of
 - Executing idempotent ETL pipelines
 - Producing deterministic weekly aggregations
 - Generating a canonical JSON contract for LLM consumption
-- Running in AWS under a controlled, run-once, low-cost architecture
+- Running in AWS under a controlled, low-cost architecture
 
 ---
 
 # Architecture Overview
 
-Raw CSV (Hevy + Diet)
-↓
-Cleaning & Validation (Silver)
-↓
-PostgreSQL (Normalized Schema)
-↓
-Gold Weekly Views
-↓
-Canonical JSON Contract
-↓
-Amazon Bedrock (LLM Analysis)
+```{mermaid}
+graph TD
+  A[Raw CSV: Hevy + Diet] --> B[Cleaning & Validation: Silver]
+  B --> C[PostgreSQL: Normalized Schema]
+  C --> D[Gold Weekly Views]
+  D --> E[Canonical JSON Contract]
+  E --> F[Amazon Bedrock: LLM Analysis]
+```
 
 
-The system was designed for **deterministic weekly reproducibility**.
+The system was designed for deterministic weekly reproducibility.
 
 ---
 
-# 3. Data Sources
+# Data Sources
 
-## 3.1 Workout Data (Hevy)
+## Workout Data (Hevy)
 
 - Format: CSV export
 - Granularity: 1 row = 1 set
@@ -59,9 +56,9 @@ The system was designed for **deterministic weekly reproducibility**.
 - Total rows: 9542
 - Total unique exercises: 118
 
-## 3.2 Diet Data
+## Diet Data
 
-- Source: SQLite → CSV export
+- Source: SQLite (personal databse) → CSV export
 - Granularity: 1 row per day
 - Includes:
   - Macros
@@ -72,7 +69,7 @@ The system was designed for **deterministic weekly reproducibility**.
 
 ---
 
-# 4. Stage 1 — Raw Workout Data Audit
+# Stage 1: Raw Workout Data
 
 Before modeling or automation, a full exploratory and quality audit was conducted.
 
@@ -267,7 +264,7 @@ print("Distribuição de Outliers por Exercício:")
 print(contagem_outliers)
 ```
 
-##### # Para Standing Calf Raise (Machine):
+##### Standing Calf Raise (Machine):
 ```{python}
 exercise_name = "Standing Calf Raise (Machine)"
 df_ex = df[df["exercise_title"] == exercise_name]
@@ -278,7 +275,7 @@ fig.show()
 
 We evaluated all exercises flagged as outliers and the majority (as seen in the example above) were warm-up sets where no load or a very low load was used; therefore, they do not qualify as incorrect data. The only exception was the Preacher Curl (Machine), detailed below, which indeed contained a manual entry error in the number of repetitions and was handled separately.
 
-##### # Preacher Curl (Machine):
+##### Preacher Curl (Machine):
 ```{python}
 exercise_name = "Preacher Curl (Machine)"
 df_ex = df[df["exercise_title"] == exercise_name]
@@ -289,7 +286,7 @@ fig.show()
 
 Here we have an incorrect value: where 111 is recorded, it should actually be 11 repetitions
 
-##### # Analyzing this specific exercise instance:
+##### Analyzing this specific exercise instance:
 ```{python}
 df[
     (df['exercise_title'] == 'Preacher Curl (Machine)') &
@@ -422,12 +419,12 @@ fig = px.bar(
     treinos_por_dia,
     x="data_treino",
     y="qtde_treinos",
-    title="Frequência de Treinos ao Longo do Tempo"
+    title="Training Frequency Over Time"
 )
 
 fig.update_layout(
     xaxis_title="Data",
-    yaxis_title="Quantidade de Treinos",
+    yaxis_title="Workout Count",
     title_x=0.5,
     height=500
 )
@@ -451,12 +448,12 @@ fig = px.line(
     x="data_treino",
     y="carga_max",
     markers=True,
-    title=f"Progressão de Carga — {exercise_name}"
+    title=f"Load progression — {exercise_name}"
 )
 
 fig.update_layout(
     xaxis_title="Data",
-    yaxis_title="Carga Máxima (kg)",
+    yaxis_title="Maximum Weight (kg)",
     title_x=0.5,
     height=500
 )
@@ -480,12 +477,12 @@ fig = px.line(
     x="data_treino",
     y="carga_max",
     markers=True,
-    title=f"Progressão de Carga — {exercise_name}"
+    title=f"Load progression — {exercise_name}"
 )
 
 fig.update_layout(
     xaxis_title="Data",
-    yaxis_title="Carga Máxima (kg)",
+    yaxis_title="Maximum Weight (kg)",
     title_x=0.5,
     height=500
 )
@@ -501,13 +498,13 @@ fig = px.scatter(
     y="reps",
     color="set_type",
     opacity=0.6,
-    title="Relação entre Carga e Repetições",
+    title="Weight and Reps Scatter",
     hover_data=["exercise_title", "data_treino"]
 )
 
 fig.update_layout(
-    xaxis_title="Carga (kg)",
-    yaxis_title="Repetições",
+    xaxis_title="Wight (kg)",
+    yaxis_title="Repetitions",
     title_x=0.5,
     height=600
 )
@@ -521,12 +518,12 @@ fig = px.histogram(
     duracao_por_treino,
     x="duracao_min",
     nbins=30,
-    title="Distribuição da Duração dos Treinos (min)"
+    title="Workout Duration Distribution (min)"
 )
 
 fig.update_layout(
-    xaxis_title="Duração (min)",
-    yaxis_title="Quantidade de Treinos",
+    xaxis_title="Duratiom (min)",
+    yaxis_title="Train Count",
     title_x=0.5,
     height=500
 )
@@ -550,14 +547,15 @@ fig = px.bar(
     x="frequencia",
     y="exercise_title",
     orientation="h",
-    title="Top 15 Exercícios Mais Frequentes"
+    title="Most Frequent Exercises (Top 15)"
 )
 
 fig.update_layout(
-    xaxis_title="Número de Séries",
+    xaxis_title="Number of sets",
     yaxis_title="",
     title_x=0.5,
-    height=600
+    height=600,
+    yaxis={'categoryorder':'total ascending'}
 )
 
 fig.show()
@@ -568,7 +566,7 @@ fig.show()
 fig = px.pie(
     df,
     names="set_type",
-    title="Distribuição dos Tipos de Série"
+    title="Set Type Distribution"
 )
 
 fig.update_layout(
@@ -596,12 +594,12 @@ fig = px.line(
     x="data_treino",
     y="total_series",
     markers=True,
-    title="Volume de Treino por Dia (Número de Séries)"
+    title="Trainning Volume per Day (Number of sets)"
 )
 
 fig.update_layout(
     xaxis_title="Data",
-    yaxis_title="Total de Séries",
+    yaxis_title="Total Sets",
     title_x=0.5,
     height=500
 )
@@ -627,12 +625,12 @@ fig = px.area(
     x="data_treino",
     y="total_series",
     color="set_type",
-    title="Volume de Séries por Tipo"
+    title="Total Sets per Type"
 )
 
 fig.update_layout(
     xaxis_title="Data",
-    yaxis_title="Total de Séries",
+    yaxis_title="Total Sets",
     title_x=0.5,
     height=500
 )
@@ -645,7 +643,7 @@ fig.show()
 df.to_csv("hevy_workouts_clean.csv",index=False,encoding="utf-8")
 ```
 
-# Stage 2 Diet Data Audit
+# Stage 2: Raw Diet Data
 
 Before integrating nutrition data into the relational model, a full validation and structural audit was performed on the exported dataset from my personal SQLite database.
 
@@ -777,7 +775,8 @@ df["cicle"].unique()
 ```
 
 To normalize this for relational modeling, a deterministic mapping was created:
-##### Cyclpe map:
+
+##### Cycle map:
 ```{python}
 cycle_map = {
     "1Cutting I (01/05/2023 - 17/09/2023)": 1,
@@ -832,7 +831,7 @@ df.to_csv(
 )
 ```
 
-# Stage 3 - Relational Modeling (Amazon RDS – PostgreSQL)
+# Stage 3: Relational Modeling (Amazon RDS)
 
 After validating and cleaning both training and nutrition datasets, the next step was the implementation of a normalized relational model.
 
@@ -850,10 +849,10 @@ The objective was to:
 
 ## Infrastructure Context
 
-Database engine: PostgreSQL
-Deployment: Amazon RDS
-Schema: `fitness`
-Connection: SSL-enabled
+* **Database engine:** PostgreSQL
+* **Deployment:** Amazon RDS
+* **Schema:** fitness
+* **Connection:** SSL-enabled
 
 RDS was intentionally chosen to:
 
@@ -862,18 +861,16 @@ RDS was intentionally chosen to:
 * Demonstrate cloud database provisioning
 * Keep operational overhead minimal
 
-This aligns with the project’s cloud-first design.
-
 **Database ER Diagram**
 
 ![](fitenssDB-LLM.png)
 
-# Schema Definition
+## Schema Definition
 
 The schema was explicitly defined to isolate all project objects.
 
 <details>
-<summary><strong>Show SQL Schema</strong></summary>
+<summary><strong>Show SQL</strong></summary>
 
 ```sql
 CREATE SCHEMA IF NOT EXISTS fitness;
@@ -889,7 +886,7 @@ This ensures:
 
 ---
 
-# Core Tables
+## Core Tables
 
 The modeling follows a normalized structure where:
 
@@ -901,10 +898,10 @@ Foreign keys enforce consistency across all relationships.
 
 ---
 
-## Table: exercises
+### Table: exercises
 
 <details>
-<summary><strong>Show SQL Schema</strong></summary>
+<summary><strong>Show SQL</strong></summary>
 
 ```sql
 CREATE TABLE exercises (
@@ -917,7 +914,7 @@ CREATE TABLE exercises (
 ```
 </details>
 
-### Design Notes
+#### Design Notes
 
 * `exercise_name` is UNIQUE to prevent duplication during ETL.
 * `is_cardio` allows future semantic filtering.
@@ -926,10 +923,10 @@ CREATE TABLE exercises (
 
 This table acts as a dimension table for exercises.
 
-## Table: workouts
+### Table: workouts
 
 <details>
-<summary><strong>Show SQL Schema</strong></summary>
+<summary><strong>Show SQL</strong></summary>
 
 ```sql
 CREATE TABLE workouts (
@@ -946,7 +943,7 @@ CREATE TABLE workouts (
 ```
 </details>
 
-### Design Notes
+#### Design Notes
 
 * `workout_date` stored separately for aggregation performance.
 * `duration_minutes` precomputed to avoid runtime calculation overhead.
@@ -955,10 +952,10 @@ CREATE TABLE workouts (
 
 This table represents the training session grain.
 
-## Table: workout_exercises
+### Table: workout_exercises
 
 <details>
-<summary><strong>Show SQL Schema</strong></summary>
+<summary><strong>Show SQL</strong></summary>
 
 ```sql
 CREATE TABLE workout_exercises (
@@ -972,7 +969,7 @@ CREATE TABLE workout_exercises (
 ```
 </details>
 
-### Design Notes
+#### Design Notes
 
 This is a bridge table resolving:
 
@@ -986,9 +983,9 @@ This is a bridge table resolving:
 
 This avoids orphan data.
 
-## Table: sets
+### Table: sets
 <details>
-<summary><strong>Show SQL Schema</strong></summary>
+<summary><strong>Show SQL</strong></summary>
 
 ```sql
 CREATE TABLE sets (
@@ -1006,7 +1003,7 @@ CREATE TABLE sets (
 ```
 </details>
 
-### Design Notes
+#### Design Notes
 
 This is the most granular fact table.
 
@@ -1029,7 +1026,7 @@ Indexes were created to optimize common aggregation paths.
 
 
 <details>
-<summary><strong>Show SQL Schema</strong></summary>
+<summary><strong>Show SQL</strong></summary>
 
 ```sql
 CREATE INDEX idx_workouts_date ON workouts(workout_date);
@@ -1048,36 +1045,29 @@ CREATE INDEX idx_sets_workout_exercise ON sets(workout_exercise_id);
 
 Indexes were added intentionally after understanding expected query patterns.
 
-## Nutrition Table
+### Nutrition Table
 
 <details>
-<summary><strong>Show SQL Schema</strong></summary>
+<summary><strong>Show SQL</strong></summary>
 
 ```sql
 CREATE TABLE diet_daily (
     diet_date DATE PRIMARY KEY,
-
     carbs_g INT,
     protein_g INT,
     fat_g INT,
-
     calories_kcal INT,
-
     cardio_weekly_min INT,
-
     cycle_id INT
         REFERENCES cycles(cycle_id),
-
     bodyweight_kg NUMERIC(5,2),
-
     notes TEXT,
-
     created_at TIMESTAMP DEFAULT NOW()
 );
 ```
 </details>
 
-### Design Notes
+#### Design Notes
 
 Grain:
 
@@ -1096,7 +1086,7 @@ This table enables:
 * Cycle segmentation
 * Cross-analysis with training
 
-# Referential Integrity Strategy
+## Referential Integrity Strategy
 
 Foreign keys were enforced in:
 
@@ -1113,41 +1103,1335 @@ This guarantees:
 
 The model prevents silent corruption.
 
+# Stage 4: ETL Pipeline (Amazon RDS)
+
+After validating and cleaning the raw datasets, the next step was to load the data into a normalized relational schema deployed in **Amazon RDS (PostgreSQL)**.
+
+The ETL pipeline was executed against an Amazon RDS PostgreSQL instance under the `fitness` schema.
+
+## Environment Configuration
+
+Database credentials were managed through environment variables to avoid hardcoding secrets.
+```{python}
+#| eval: false
+import os
+from dotenv import load_dotenv
+
+# Carrega o .env da raiz do projeto
+load_dotenv()
+
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_NAME = os.getenv("DB_NAME", "postgres")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_SCHEMA = os.getenv("DB_SCHEMA", "fitness")
+
+CSV_PATH = os.getenv("CSV_PATH")
+```
+
+This ensures:
+
+* Secure configuration
+* Easy migration between local and AWS environments
+* No credentials stored in version control
+
+## Database Engine (Amazon RDS Connection)
+```{python}
+#| eval: false
+from sqlalchemy import create_engine
+from etl.config.settings import (
+    DB_HOST, DB_PORT, DB_NAME,
+    DB_USER, DB_PASSWORD, DB_SCHEMA
+)
+
+def get_engine():
+    if not DB_PASSWORD:
+        raise RuntimeError("DB_PASSWORD não foi carregada do .env")
+
+    url = (
+        f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}"
+        f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    )
+
+    engine = create_engine(
+        url,
+        connect_args={"options": f"-csearch_path={DB_SCHEMA}"}
+    )
+
+    return engine
+```
+
+This engine connects directly to:
+
+> Amazon RDS → PostgreSQL → fitness schema
+
+---
+
+## Load Order Strategy
+
+Because of foreign key dependencies, the loading order must respect relational integrity:
+
+1. exercises
+2. workouts
+3. workout_exercises
+4. sets
+
+This guarantees:
+
+* No orphan records
+* Valid foreign keys
+* Controlled dependency resolution
+
+## Load — Exercises
+```{python}
+#| eval: false
+import pandas as pd
+from sqlalchemy import text
+from etl.utils.db import get_engine
+from etl.config.settings import CSV_PATH
 
 
+def load_exercises():
+    engine = get_engine()
 
+    # 1. Ler CSV (Bronze → memória)
+    df = pd.read_csv(CSV_PATH)
 
+    # 2. Extrair exercícios únicos
+    exercises = (
+        df["exercise_title"]
+        .dropna()
+        .drop_duplicates()
+        .sort_values()
+        .to_frame(name="exercise_name")
+    )
+
+    # 3. Inferir se é cardio
+    cardio_mask = (
+        df.groupby("exercise_title")[["distance_km", "duration_seconds"]]
+        .apply(lambda x: x.notna().any().any())
+    )
+
+    exercises["is_cardio"] = (
+        exercises["exercise_name"]
+        .map(cardio_mask)
+        .fillna(False)
+    )
+
+    # 4. Inserção idempotente
+    insert_sql = text("""
+        INSERT INTO exercises (exercise_name, is_cardio)
+        VALUES (:exercise_name, :is_cardio)
+        ON CONFLICT (exercise_name) DO NOTHING;
+    """)
+
+    with engine.begin() as conn:
+        conn.execute(
+            insert_sql,
+            exercises.to_dict(orient="records")
+        )
+
+    print(f"[OK] {len(exercises)} exercises processed.")
+```
+
+Key logic:
+
+* Extract unique exercises from CSV
+* Infer `is_cardio`
+* Insert using `ON CONFLICT DO NOTHING`
+
+Idempotent insert:
 
 <details>
-<summary><strong>Show SQL Schema</strong></summary>
+<summary><strong>Show SQL</strong></summary>
 
 ```sql
-CREATE DATABASE IF NOT EXISTS ecommerce_db
-DESCRIBE product_views;
+INSERT INTO exercises (exercise_name, is_cardio)
+VALUES (:exercise_name, :is_cardio)
+ON CONFLICT (exercise_name) DO NOTHING;
 ```
 </details>
 
+This ensures:
 
+* Safe re-runs
+* No duplication
+* Deterministic state in RDS
 
-##### Function:
+---
+
+## Load — Workouts:
 ```{python}
+#| eval: false
+import pandas as pd
+from sqlalchemy import text
+from etl.utils.db import get_engine
+from etl.config.settings import CSV_PATH
 
+
+def load_workouts():
+    engine = get_engine()
+
+    # 1. Ler CSV
+    df = pd.read_csv(CSV_PATH)
+
+    # 2. Parse datas
+    df["start_time"] = pd.to_datetime(df["start_time"])
+    df["end_time"] = pd.to_datetime(df["end_time"])
+
+    # 3. Agrupar por sessão de treino
+    workouts = (
+        df.groupby(["title", "start_time", "end_time"], as_index=False)
+        .agg(
+            workout_name=("title", "first"),
+            description=("description", "first")
+        )
+    )
+
+    # 4. Campos derivados
+    workouts["workout_date"] = workouts["start_time"].dt.date
+    workouts["duration_minutes"] = (
+        (workouts["end_time"] - workouts["start_time"])
+        .dt.total_seconds() / 60
+    )
+    workouts["source"] = "hevy_csv"
+
+    # 5. SQLs
+    select_sql = text("""
+        SELECT workout_id
+        FROM workouts
+        WHERE workout_name = :workout_name
+          AND start_time = :start_time
+          AND end_time = :end_time
+    """)
+
+    insert_sql = text("""
+        INSERT INTO workouts (
+            workout_name,
+            workout_date,
+            start_time,
+            end_time,
+            duration_minutes,
+            description,
+            source
+        )
+        VALUES (
+            :workout_name,
+            :workout_date,
+            :start_time,
+            :end_time,
+            :duration_minutes,
+            :description,
+            :source
+        )
+    """)
+
+    inserted = 0
+
+    with engine.begin() as conn:
+        for _, row in workouts.iterrows():
+            exists = conn.execute(
+                select_sql,
+                {
+                    "workout_name": row["workout_name"],
+                    "start_time": row["start_time"],
+                    "end_time": row["end_time"],
+                }
+            ).fetchone()
+
+            if exists:
+                continue
+
+            conn.execute(insert_sql, row.to_dict())
+            inserted += 1
+
+    print(f"[OK] {inserted} workouts inserted.")
+```
+
+Steps:
+
+* Group by session (`title`, `start_time`, `end_time`)
+* Derive:
+
+  * workout_date
+  * duration_minutes
+  * source
+
+Existence check:
+<details>
+<summary><strong>Show SQL</strong></summary>
+
+```sql
+SELECT workout_id
+FROM workouts
+WHERE workout_name = :workout_name
+  AND start_time = :start_time
+  AND end_time = :end_time
+```
+</details>
+
+Only inserts if not found.
+
+This prevents duplicate training sessions on re-execution.
+
+---
+
+## Load — Workout Exercises:
+```{python}
+#| eval: false
+import pandas as pd
+from sqlalchemy import text
+from etl.utils.db import get_engine
+from etl.config.settings import CSV_PATH
+
+
+def load_workout_exercises():
+    engine = get_engine()
+
+    # 1. Ler CSV
+    df = pd.read_csv(CSV_PATH)
+
+    # Parse datas
+    df["start_time"] = pd.to_datetime(df["start_time"])
+    df["end_time"] = pd.to_datetime(df["end_time"])
+
+    # 2. Buscar mapeamento de workouts
+    with engine.begin() as conn:
+        workouts_map = {
+            (row.workout_name, row.start_time, row.end_time): row.workout_id
+            for row in conn.execute(text("""
+                SELECT workout_id, workout_name, start_time, end_time
+                FROM workouts
+            """))
+        }
+
+        exercises_map = {
+            row.exercise_name: row.exercise_id
+            for row in conn.execute(text("""
+                SELECT exercise_id, exercise_name
+                FROM exercises
+            """))
+        }
+
+    # 3. Gerar estrutura workout_exercises
+    records = []
+    seen = set()
+
+    for (
+        workout_name,
+        start_time,
+        end_time
+    ), group in df.groupby(["title", "start_time", "end_time"]):
+
+        workout_id = workouts_map.get((workout_name, start_time, end_time))
+        if not workout_id:
+            continue
+
+        exercise_sequence = (
+            group["exercise_title"]
+            .drop_duplicates()
+            .tolist()
+        )
+
+        for order, exercise_name in enumerate(exercise_sequence):
+            exercise_id = exercises_map.get(exercise_name)
+            if not exercise_id:
+                continue
+
+            superset_id = (
+                group[group["exercise_title"] == exercise_name]["superset_id"]
+                .dropna()
+                .unique()
+            )
+            superset_id = int(superset_id[0]) if len(superset_id) > 0 else None
+
+            key = (workout_id, exercise_id, order)
+            if key in seen:
+                continue
+            seen.add(key)
+
+            records.append({
+                "workout_id": workout_id,
+                "exercise_id": exercise_id,
+                "exercise_order": order,
+                "superset_id": superset_id,
+                "notes": None
+            })
+
+    # 4. Inserção idempotente
+    insert_sql = text("""
+        INSERT INTO workout_exercises (
+            workout_id,
+            exercise_id,
+            exercise_order,
+            superset_id,
+            notes
+        )
+        VALUES (
+            :workout_id,
+            :exercise_id,
+            :exercise_order,
+            :superset_id,
+            :notes
+        )
+        ON CONFLICT DO NOTHING;
+    """)
+
+    with engine.begin() as conn:
+        conn.execute(insert_sql, records)
+
+    print(f"[OK] {len(records)} workout_exercises processed.")
+```
+
+Responsibilities:
+
+* Map workouts → exercises
+* Preserve exercise order
+* Preserve superset relationships
+
+Idempotent logic:
+<details>
+<summary><strong>Show SQL</strong></summary>
+
+```sql
+INSERT INTO workout_exercises (...)
+VALUES (...)
+ON CONFLICT DO NOTHING;
+```
+</details>
+
+Ensures safe replay.
+
+---
+
+## Load — Sets (Most Granular Layer):
+```{python}
+#| eval: false
+import pandas as pd
+from sqlalchemy import text
+from etl.utils.db import get_engine
+from etl.config.settings import CSV_PATH
+
+
+def clean_nan(value):
+    """
+    Converte NaN do pandas para None (NULL no PostgreSQL)
+    """
+    if pd.isna(value):
+        return None
+    return value
+
+
+def load_sets():
+    engine = get_engine()
+
+    # 1. Ler CSV
+    df = pd.read_csv(CSV_PATH)
+
+    # Parse datas
+    df["start_time"] = pd.to_datetime(df["start_time"])
+    df["end_time"] = pd.to_datetime(df["end_time"])
+
+    # 2. Mapas auxiliares
+    with engine.begin() as conn:
+        workouts_map = {
+            (row.workout_name, row.start_time, row.end_time): row.workout_id
+            for row in conn.execute(text("""
+                SELECT workout_id, workout_name, start_time, end_time
+                FROM workouts
+            """))
+        }
+
+        exercises_map = {
+            row.exercise_name: row.exercise_id
+            for row in conn.execute(text("""
+                SELECT exercise_id, exercise_name
+                FROM exercises
+            """))
+        }
+
+        workout_ex_map = {
+            (row.workout_id, row.exercise_id, row.exercise_order): row.workout_exercise_id
+            for row in conn.execute(text("""
+                SELECT workout_exercise_id, workout_id, exercise_id, exercise_order
+                FROM workout_exercises
+            """))
+        }
+
+    inserted = 0
+
+    insert_sql = text("""
+        INSERT INTO sets (
+            workout_exercise_id,
+            set_index,
+            set_type,
+            weight_kg,
+            reps,
+            distance_km,
+            duration_seconds,
+            rpe
+        )
+        VALUES (
+            :workout_exercise_id,
+            :set_index,
+            :set_type,
+            :weight_kg,
+            :reps,
+            :distance_km,
+            :duration_seconds,
+            :rpe
+        )
+    """)
+
+    exists_sql = text("""
+        SELECT 1
+        FROM sets
+        WHERE workout_exercise_id = :workout_exercise_id
+          AND set_index = :set_index
+    """)
+
+    with engine.begin() as conn:
+        for (
+            workout_name,
+            start_time,
+            end_time
+        ), group in df.groupby(["title", "start_time", "end_time"]):
+
+            workout_id = workouts_map.get((workout_name, start_time, end_time))
+            if not workout_id:
+                continue
+
+            # Ordem dos exercícios dentro do treino
+            exercise_sequence = (
+                group["exercise_title"]
+                .drop_duplicates()
+                .tolist()
+            )
+
+            exercise_order_map = {
+                name: idx for idx, name in enumerate(exercise_sequence)
+            }
+
+            for _, row in group.iterrows():
+                exercise_id = exercises_map.get(row["exercise_title"])
+                if not exercise_id:
+                    continue
+
+                exercise_order = exercise_order_map.get(row["exercise_title"])
+                workout_exercise_id = workout_ex_map.get(
+                    (workout_id, exercise_id, exercise_order)
+                )
+
+                if not workout_exercise_id:
+                    continue
+
+                exists = conn.execute(
+                    exists_sql,
+                    {
+                        "workout_exercise_id": workout_exercise_id,
+                        "set_index": int(row["set_index"]),
+                    }
+                ).fetchone()
+
+                if exists:
+                    continue
+
+                conn.execute(
+                    insert_sql,
+                    {
+                        "workout_exercise_id": workout_exercise_id,
+                        "set_index": int(row["set_index"]),
+                        "set_type": row["set_type"],
+                        "weight_kg": clean_nan(row["weight_kg"]),
+                        "reps": clean_nan(row["reps"]),
+                        "distance_km": clean_nan(row["distance_km"]),
+                        "duration_seconds": clean_nan(row["duration_seconds"]),
+                        "rpe": clean_nan(row["rpe"]),
+                    }
+                )
+
+                inserted += 1
+
+    print(f"[OK] {inserted} sets inserted.")
+```
+
+This is the most sensitive layer:
+
+* 1 row = 1 set
+* Must match workout_exercise_id
+* Must avoid duplication
+
+Before insertion:
+
+* Convert NaN → NULL (PostgreSQL compatible)
+
+Existence check:
+<details>
+<summary><strong>Show SQL</strong></summary>
+
+```sql
+SELECT 1
+FROM sets
+WHERE workout_exercise_id = :workout_exercise_id
+  AND set_index = :set_index
+```
+</details>
+
+If exists → skip
+If not → insert
+
+This makes the pipeline:
+
+> Fully idempotent at the lowest grain level
+
+## Pipeline Orchestration:
+
+All steps were orchestrated through a single execution entrypoint:
+```{python}
+#| eval: false
+from etl.load.load_exercises import load_exercises
+from etl.load.load_workouts import load_workouts
+from etl.load.load_workout_exercises import load_workout_exercises
+from etl.load.load_sets import load_sets
+
+
+def run():
+    print("=== ETL STARTED ===")
+
+    load_exercises()
+    load_workouts()
+    load_workout_exercises()
+    load_sets()
+
+    print("=== ETL FINISHED ===")
+
+
+if __name__ == "__main__":
+    run()
+```
+
+This executed directly against:
+
+> Amazon RDS (PostgreSQL)
+
+## Idempotency Validation
+
+The ETL pipeline was executed multiple times directly in Amazon RDS to validate replay safety and deterministic behavior. Across repeated executions, no duplicate exercises, workouts, or sets were created, and no referential integrity violations occurred. Row counts remained stable, confirming that the loading logic — including ON CONFLICT clauses and explicit existence checks — guarantees idempotent behavior and consistent state reconstruction.
+
+This validates that the pipeline is replay-safe by design, meaning the same input dataset always produces the same relational state without unintended duplication or corruption.
+
+---
+
+## Production Characteristics
+
+The ETL architecture was intentionally designed with production principles in mind. The modular structure, explicit foreign key mapping, deterministic execution order, and SQLAlchemy-based connectivity ensure that the pipeline can be easily extended into scheduled batch jobs, containerized workflows, or orchestrated environments such as Lambda or Airflow.
+
+At this stage, validated CSV datasets were transformed into a fully normalized relational schema in Amazon RDS using PostgreSQL, idempotent SQL patterns, and controlled schema management. The system is now structurally stable, cloud-portable, and prepared for analytical aggregation in the Gold layer and subsequent LLM contract generation.
+
+# Stage 5: Gold Layer
+
+After loading the normalized relational model into **Amazon RDS (PostgreSQL)**, the next step was to build the **Gold Layer**.
+
+This layer was designed specifically for:
+
+* Weekly deterministic aggregation
+* Safe week-over-week comparison
+* Explicit metric semantics
+* No hidden calculations
+* LLM-ready consumption
+
+All views were created directly inside the Amazon RDS instance under the `fitness` schema.
+
+## Weekly Training Summary
+
+This view aggregates training metrics at the weekly level.
+
+<details>
+<summary><strong>Show SQL</strong></summary>
+
+```sql
+CREATE OR REPLACE VIEW gold_weekly_fitness_summary AS
+WITH training_summary AS (
+    SELECT
+        DATE_TRUNC('week', w.workout_date)::date AS week_start,
+        COUNT(DISTINCT w.workout_id)             AS training_sessions,
+        COUNT(s.set_id)                          AS total_sets,
+        COUNT(*) FILTER (WHERE s.set_type = 'failure') AS failure_sets,
+        ROUND(AVG(s.reps), 2)                    AS avg_reps_per_set
+    FROM workouts w
+    JOIN workout_exercises we
+        ON w.workout_id = we.workout_id
+    JOIN sets s
+        ON we.workout_exercise_id = s.workout_exercise_id
+    WHERE s.set_type <> 'warmup'
+    GROUP BY week_start
+)
+SELECT
+    d.week_start,
+
+    -- Diet
+    d.avg_calories_kcal,
+    d.avg_carbs_g,
+    d.avg_protein_g,
+    d.avg_fat_g,
+    d.avg_bodyweight_kg,
+    d.cardio_weekly_min,
+    d.logged_days,
+
+    -- Training
+    t.training_sessions,
+    t.total_sets,
+    t.failure_sets,
+    t.avg_reps_per_set,
+
+    -- Cycle
+    c.cycle_name,
+    c.cycle_type
+FROM gold_weekly_diet_summary d
+LEFT JOIN training_summary t
+    ON d.week_start = t.week_start
+LEFT JOIN cycles c
+    ON d.cycle_id = c.cycle_id;
+```
+</details>
+
+### Purpose
+
+This creates a stable weekly anchor containing:
+
+* Diet averages
+* Training volume
+* Failure intensity
+* Active cycle
+
+This becomes the **high-level weekly context layer**.
+
+---
+
+## Weekly Training Detail (Per Exercise)
+
+<details>
+<summary><strong>Show SQL</strong></summary>
+
+```sql
+CREATE OR REPLACE VIEW gold_weekly_training_detail AS
+SELECT
+    DATE_TRUNC('week', w.workout_date)::date AS week_start,
+
+    e.exercise_name,
+    mg.muscle_group_name,
+
+    COUNT(s.set_id)                          AS total_sets,
+    ROUND(AVG(s.weight_kg), 2)               AS avg_weight_kg,
+    ROUND(AVG(s.reps), 2)                    AS avg_reps,
+    MAX(s.weight_kg)                         AS max_weight_kg,
+
+    COUNT(*) FILTER (WHERE s.set_type = 'failure') AS failure_sets
+FROM workouts w
+JOIN workout_exercises we
+    ON w.workout_id = we.workout_id
+JOIN exercises e
+    ON we.exercise_id = e.exercise_id
+JOIN exercise_muscle_map emm
+    ON e.exercise_id = emm.exercise_id
+JOIN muscle_groups mg
+    ON emm.muscle_group_id = mg.muscle_group_id
+JOIN sets s
+    ON we.workout_exercise_id = s.workout_exercise_id
+WHERE s.set_type <> 'warmup'
+GROUP BY
+    week_start,
+    e.exercise_name,
+    mg.muscle_group_name;
+```
+</details>
+
+### Purpose
+
+This view exposes:
+
+* Volume by exercise
+* Muscle group mapping
+* Average and maximum loads
+* Failure density
+
+This enables:
+
+* Muscle-specific analysis
+* Volume allocation insights
+* Performance segmentation
+
+## Weekly Exercise Performance (Structured Metrics)
+
+<details>
+<summary><strong>Show SQL</strong></summary>
+
+```sql
+CREATE OR REPLACE VIEW gold_weekly_exercise_performance AS
+SELECT
+    DATE_TRUNC('week', w.workout_date)::date AS week_start,
+
+    e.exercise_id,
+    e.exercise_name,
+    mg.muscle_group_name,
+
+    COUNT(s.set_id) AS total_sets,
+
+    COUNT(*) FILTER (
+        WHERE s.set_type = 'failure'
+    ) AS failure_sets,
+
+    ROUND(AVG(s.reps), 2) AS avg_reps,
+
+    ROUND(AVG(s.weight_kg), 2) AS avg_weight_kg,
+    MAX(s.weight_kg)           AS max_weight_kg,
+
+    SUM(s.reps) AS total_reps,
+
+    COUNT(DISTINCT w.workout_id) AS sessions_count
+
+FROM workouts w
+JOIN workout_exercises we
+    ON w.workout_id = we.workout_id
+JOIN sets s
+    ON we.workout_exercise_id = s.workout_exercise_id
+JOIN exercises e
+    ON we.exercise_id = e.exercise_id
+JOIN exercise_muscle_map emm
+    ON e.exercise_id = emm.exercise_id
+JOIN muscle_groups mg
+    ON emm.muscle_group_id = mg.muscle_group_id
+
+WHERE s.set_type <> 'warmup'
+
+GROUP BY
+    week_start,
+    e.exercise_id,
+    e.exercise_name,
+    mg.muscle_group_name;
+```
+</details>
+
+### Purpose
+
+This is the **LLM-facing metric layer**.
+
+It produces:
+
+* Explicit totals
+* Explicit averages
+* Explicit max loads
+* Explicit session count
+
+No inferred metrics.
+No derived semantics.
+Only controlled aggregations.
+
+## Week-over-Week Progression
+
+This view introduces temporal comparison using window functions.
+
+<details>
+<summary><strong>Show SQL</strong></summary>
+
+```sql
+CREATE OR REPLACE VIEW gold_weekly_exercise_progression AS
+SELECT
+    week_start,
+    exercise_id,
+    exercise_name,
+    muscle_group_name,
+
+    -- Current week metrics
+    total_sets,
+    total_reps,
+    avg_reps,
+    avg_weight_kg,
+    max_weight_kg,
+    failure_sets,
+    sessions_count,
+
+    -- Previous week metrics
+    LAG(total_sets)      OVER w AS prev_total_sets,
+    LAG(total_reps)      OVER w AS prev_total_reps,
+    LAG(avg_reps)        OVER w AS prev_avg_reps,
+    LAG(avg_weight_kg)   OVER w AS prev_avg_weight_kg,
+    LAG(max_weight_kg)   OVER w AS prev_max_weight_kg,
+    LAG(failure_sets)    OVER w AS prev_failure_sets,
+
+    -- Deltas
+    total_sets    - LAG(total_sets)    OVER w AS delta_total_sets,
+    total_reps    - LAG(total_reps)    OVER w AS delta_total_reps,
+    avg_reps      - LAG(avg_reps)      OVER w AS delta_avg_reps,
+    avg_weight_kg - LAG(avg_weight_kg) OVER w AS delta_avg_weight_kg,
+    max_weight_kg - LAG(max_weight_kg) OVER w AS delta_max_weight_kg,
+    failure_sets  - LAG(failure_sets)  OVER w AS delta_failure_sets
+
+FROM gold_weekly_exercise_performance
+WINDOW w AS (
+    PARTITION BY exercise_id
+    ORDER BY week_start
+);
+```
+</details>
+
+### Purpose
+
+This enables:
+
+* Deterministic progression tracking
+* Explicit deltas
+* Safe LLM comparison
+
+Instead of asking the LLM to compute differences, the database computes them deterministically.
+
+## Final LLM Context View
+
+
+This is the final structured analytical contract inside RDS.
+
+<details>
+<summary><strong>Show SQL</strong></summary>
+
+```sql
+CREATE OR REPLACE VIEW gold_llm_weekly_exercise_context AS
+SELECT
+    p.week_start,
+
+    -- Exercise identity
+    p.exercise_id,
+    p.exercise_name,
+    p.muscle_group_name,
+
+    -- Training (current week)
+    p.total_sets,
+    p.total_reps,
+    p.avg_reps,
+    p.avg_weight_kg,
+    p.max_weight_kg,
+    p.failure_sets,
+    p.sessions_count,
+
+    -- Training deltas (vs previous week)
+    p.delta_total_sets,
+    p.delta_total_reps,
+    p.delta_avg_reps,
+    p.delta_avg_weight_kg,
+    p.delta_max_weight_kg,
+    p.delta_failure_sets,
+
+    -- Diet context (weekly)
+    d.avg_calories_kcal,
+    d.avg_carbs_g,
+    d.avg_protein_g,
+    d.avg_fat_g,
+    d.cardio_weekly_min,
+    d.avg_bodyweight_kg,
+    d.logged_days,
+
+    -- Cycle context
+    c.cycle_id,
+    c.cycle_name,
+    c.cycle_type
+
+FROM gold_weekly_exercise_progression p
+LEFT JOIN gold_weekly_diet_summary d
+    ON p.week_start = d.week_start
+LEFT JOIN cycles c
+    ON d.cycle_id = c.cycle_id;
+```
+</details>
+
+### Purpose
+
+This is the final structured semantic layer consumed by the JSON extractor.
+
+It merges:
+
+* Exercise performance
+* Progression metrics
+* Diet context
+* Cycle context
+
+Into a single analytical surface.
+
+## Gold Layer Summary
+
+The Gold Layer was fully implemented inside Amazon RDS using SQL views.
+
+# Stage 6: Canonical JSON (LLM)
+
+After building the normalized relational model and the Gold analytical layer, the final step was to generate a canonical, deterministic JSON contract designed specifically for language model consumption.
+
+The goal was not to simply serialize database rows, but to:
+
+* Eliminate relational complexity
+* Remove ambiguity
+* Provide explicit deltas (no inference required)
+* Deliver a schema-stable, versioned payload
+
+This JSON acts as the single source of truth for LLM analysis.
+
+## Design Principles
+
+The canonical contract was designed under the following constraints:
+
+1. **One file per week**
+2. Fully deterministic structure
+3. Explicit weekly progression deltas
+4. No derived metrics inside the LLM
+5. No missing semantic context
+6. Schema versioning support
+
+## Schema Definition (Versioned Contract)
+
+The schema is explicitly defined and version-controlled:
+
+
+<details>
+<summary><strong>Show Code</strong></summary>
+
+```json
+{
+  "week_start": "YYYY-MM-DD",
+  "cycle": {
+    "cycle_id": "int",
+    "cycle_name": "string",
+    "cycle_type": "cutting | bulking | maintenance | reverse"
+  },
+  "diet": {
+    "avg_calories_kcal": "number",
+    "avg_carbs_g": "number",
+    "avg_protein_g": "number",
+    "avg_fat_g": "number",
+    "cardio_weekly_min": "number",
+    "avg_bodyweight_kg": "number",
+    "logged_days": "int"
+  },
+  "training_overview": {
+    "training_sessions": "int",
+    "total_sets": "int",
+    "failure_sets": "int",
+    "avg_reps_per_set": "number"
+  },
+  "exercises": [
+    {
+      "exercise_id": "int",
+      "exercise_name": "string",
+      "muscle_group": "string",
+      "current_week": { ... },
+      "delta_vs_last_week": { ... }
+    }
+  ]
+}
+```
+</details>
+
+## Payload Builder Implementation
+
+The JSON is generated from Gold views using a dedicated extraction script.
+
+```{python}
+#| eval: false
+import json
+import os
+from datetime import date
+from decimal import Decimal
+
+from sqlalchemy import text
+from etl.utils.db import get_engine
+
+# ===============================
+# CONFIG
+# ===============================
+
+OUTPUT_DIR = "llm/payloads"
+SCHEMA_VERSION = "v1"
+
+
+# ===============================
+# UTILS
+# ===============================
+
+def json_safe(value):
+    """
+    Converte tipos não serializáveis (Decimal, date, datetime)
+    para formatos compatíveis com JSON.
+    """
+    if isinstance(value, Decimal):
+        return float(value)
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    return value
+
+
+# ===============================
+# FETCH FUNCTIONS
+# ===============================
+
+def fetch_weekly_summary(conn, week_start):
+    sql = text("""
+        SELECT *
+        FROM gold_weekly_fitness_summary
+        WHERE week_start = :week_start
+    """)
+    row = conn.execute(
+        sql,
+        {"week_start": week_start}
+    ).mappings().fetchone()
+
+    return dict(row) if row else None
+
+
+def fetch_exercise_context(conn, week_start):
+    sql = text("""
+        SELECT *
+        FROM gold_llm_weekly_exercise_context_v1
+        WHERE week_start = :week_start
+        ORDER BY exercise_name
+    """)
+
+    rows = conn.execute(
+        sql,
+        {"week_start": week_start}
+    ).mappings().fetchall()
+
+    return [dict(r) for r in rows]
+
+
+# ===============================
+# PAYLOAD BUILDER
+# ===============================
+
+def build_payload(week_start: str):
+    engine = get_engine()
+
+    with engine.begin() as conn:
+        weekly = fetch_weekly_summary(conn, week_start)
+        if not weekly:
+            raise RuntimeError(
+                f"No weekly summary found for week_start={week_start}"
+            )
+
+        exercises_raw = fetch_exercise_context(conn, week_start)
+        if not exercises_raw:
+            raise RuntimeError(
+                f"No exercise context found for week_start={week_start}"
+            )
+
+    # -------------------------------
+    # Exercises
+    # -------------------------------
+    exercises = []
+
+    for r in exercises_raw:
+        exercises.append({
+            "exercise_id": r["exercise_id"],
+            "exercise_name": r["exercise_name"],
+            "muscle_group": r["muscle_group_name"],
+
+            "current_week": {
+                "total_sets": r["current_total_sets"],
+                "total_reps": r["current_total_reps"],
+                "avg_reps": json_safe(r["current_avg_reps"]),
+                "avg_weight_kg": json_safe(r["current_avg_weight_kg"]),
+                "max_weight_kg": json_safe(r["current_max_weight_kg"]),
+                "failure_sets": r["current_failure_sets"],
+                "sessions_count": r["current_sessions"]
+            },
+
+            "delta_vs_last_week": {
+                "total_sets": r["delta_sets"],
+                "total_reps": r["delta_reps"],
+                "avg_reps": json_safe(r["delta_avg_reps"]),
+                "avg_weight_kg": json_safe(r["delta_avg_weight_kg"]),
+                "max_weight_kg": json_safe(r["delta_max_weight_kg"]),
+                "failure_sets": r["delta_failure_sets"]
+            }
+        })
+
+    # -------------------------------
+    # Final payload
+    # -------------------------------
+    payload = {
+        "schema_version": SCHEMA_VERSION,
+        "generated_at": date.today().isoformat(),
+        "week_start": weekly["week_start"].isoformat(),
+
+        "cycle": {
+            "cycle_name": weekly["cycle_name"],
+            "cycle_type": weekly["cycle_type"]
+        },
+
+        "diet": {
+            "avg_calories_kcal": json_safe(weekly["avg_calories_kcal"]),
+            "avg_carbs_g": json_safe(weekly["avg_carbs_g"]),
+            "avg_protein_g": json_safe(weekly["avg_protein_g"]),
+            "avg_fat_g": json_safe(weekly["avg_fat_g"]),
+            "cardio_weekly_min": weekly["cardio_weekly_min"],
+            "avg_bodyweight_kg": json_safe(weekly["avg_bodyweight_kg"]),
+            "logged_days": weekly["logged_days"]
+        },
+
+        "training_overview": {
+            "training_sessions": weekly["training_sessions"],
+            "total_sets": weekly["total_sets"],
+            "failure_sets": weekly["failure_sets"],
+            "avg_reps_per_set": json_safe(weekly["avg_reps_per_set"])
+        },
+
+        "exercises": exercises
+    }
+
+    return payload
+
+
+# ===============================
+# SAVE
+# ===============================
+
+def save_payload(payload):
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    fname = f"weekly_fitness_context_{payload['week_start']}.json"
+    path = os.path.join(OUTPUT_DIR, fname)
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+
+    return path
+
+
+# ===============================
+# MAIN
+# ===============================
+
+if __name__ == "__main__":
+    # Use uma semana que você sabe que existe no banco
+    WEEK_START = "2026-01-05"
+
+    payload = build_payload(WEEK_START)
+    path = save_payload(payload)
+
+    print(f"[OK] Weekly context generated: {path}")
 ```
 
 
+## Why This Structure Is LLM-Optimal
 
+The JSON contract was intentionally designed to eliminate the most common failure modes observed when large language models consume structured data. Instead of requiring the model to infer joins, compute temporal comparisons, or aggregate metrics on the fly, all calculations are performed upstream in the Gold layer. The LLM receives a fully contextualized, semantically complete representation of the week.
 
-##### Execution of initial exploratory queries:
+There are no implicit relationships left to interpret, no derived metrics to calculate, and no schema ambiguity. Weekly deltas are explicitly provided, progression is already computed, and all nutritional and training context is embedded within the same document. As a result, the model operates purely as an analytical reasoning layer rather than a data transformation engine. This dramatically increases reliability, interpretability, and consistency of responses.
 
-{{< video SQL-QUERIES.mp4 >}}
+## Deterministic Properties
+
+For any given week_start, the system always produces the exact same output. The canonical JSON is generated from stable Gold views, using a fixed schema definition, explicit ordering rules, and deterministic delta calculations based on window functions. There is no stochastic logic in the data layer, no dynamic field generation, and no schema mutation.
+
+Because the transformation pipeline is idempotent and the Gold layer is reproducible, the JSON payload becomes a replay-safe artifact. Running the extraction process multiple times for the same week will always result in an identical file. This deterministic behavior is critical for safe LLM interaction, auditing, version control, and long-term system stability.
+
+## Architectural Role
+
+The JSON contract represents the formal boundary between structured analytical data and generative AI systems. Upstream of this boundary, the system is strictly relational, normalized, and governed by SQL logic inside Amazon RDS. Downstream of this boundary, the system becomes model-agnostic and cloud-portable.
+
+Because the contract is independent of any specific model provider, it can be stored in S3, consumed by Amazon Bedrock, OpenAI models, or any future inference endpoint without requiring changes to the data layer. This separation of concerns ensures that the analytical infrastructure remains stable even as the AI layer evolves.
+
+# Stage 7 — AWS Execution
+
+After the relational modeling, Gold-layer aggregation, and canonical JSON generation were completed, the final stage of the project was executed entirely within the AWS ecosystem.
+
+The weekly payload generated from Amazon RDS was uploaded to Amazon S3 and consumed directly through Amazon Bedrock. The LLM interaction occurred inside the AWS environment, ensuring that the structured data layer, storage layer, and inference layer remained cloud-native and internally integrated.
+
+The inference process followed this flow:
+
+Amazon RDS (Gold Views)
+→ Canonical JSON Extraction
+→ S3 Upload
+→ Amazon Bedrock (LLM Inference)
+→ Generated Weekly Performance Report
+
+The prompt was manually defined inside the Bedrock playground, and the JSON payload was provided as structured context. The model was instructed to generate a deterministic weekly analytical report, focusing on progression, regression, diet alignment, fatigue signals, and performance insights — without inventing metrics or extrapolating beyond the provided contract.
+
+The entire execution was recorded to demonstrate real AWS operation, including payload submission and model response generation.
+
+---
+
+## AWS Run-Once Execution (Bedrock Inference)
+
+To demonstrate full cloud integration, the final analytical stage of the project was executed entirely inside Amazon Web Services.
+
+This execution followed a run-once model, intentionally designed to validate the architecture while maintaining strict cost control. The objective was not continuous deployment, but architectural proof of integration between:
+
+* Structured relational data (Amazon RDS)
+* Canonical analytical artifact (JSON)
+* Generative AI inference (Amazon Bedrock)
+
+## S3 Bucket Creation and Canonical Payload Upload
+
+The first step of the cloud execution layer was the creation of an Amazon S3 bucket to store the canonical JSON contract generated from the Gold layer.
+
+The recorded demonstration includes:
+
+* Creation of a dedicated S3 bucket
+* Proper configuration and region selection
+* Upload of the generated weekly JSON payload
+* Verification of the object structure inside AWS
+
+This step establishes S3 as the formal storage boundary between deterministic data engineering outputs and AI consumption layers.
+
+By uploading the JSON to S3, the architecture aligns with production-grade patterns where:
+
+* Analytical artifacts are versioned
+* Outputs are cloud-stored
+* Downstream services can consume structured data
+* The data platform remains decoupled from inference engines
+
+The S3 object represents the finalized analytical state of a given `week_start`.
+
+{{< video Bucket_S3_creation.mp4 >}}
+
+## Amazon Bedrock Prompt Execution and LLM Report Generation
+
+After the canonical JSON was available in AWS, the next step was inference execution inside Amazon Bedrock.
+
+In the recorded demonstration:
+
+* The Amazon Bedrock Playground was opened
+* A Claude model was selected
+* The canonical JSON payload was inserted as structured context
+* A carefully engineered analytical prompt was defined
+* The model generated a weekly performance report
+* The result was reviewed and validated against the structured input
+
+The prompt was designed to:
+
+* Constrain reasoning strictly to provided data
+* Avoid external assumptions
+* Focus on progression and regression signals
+* Correlate diet and training metrics
+* Produce structured analytical insights rather than narrative speculation
+
+The model operates purely as an analytical reasoning layer, not as a data transformation layer.
+
+This confirms that the system successfully transitions from:
+
+Relational Modeling (RDS)
+→ Analytical Aggregation (Gold Layer)
+→ Deterministic JSON Contract
+→ Cloud Storage (S3)
+→ Generative Analysis (Bedrock)
+
+The execution was run-once to minimize cloud costs, but the architecture fully supports future automation through event-driven or scheduled orchestration.
+
+{{< video Claude.mp4 >}}
 
 ---
 
 # Project Conclusion
 
-This project demonstrates the construction of a hybrid recommender system that is interpretable and production-oriented, combining technical rigor with direct business impact.
+This project demonstrates the full construction of an end-to-end analytical data platform, starting from raw operational CSV exports and evolving into a cloud-executed, AI-ready reporting system. Every stage was deliberately engineered with production principles in mind: explicit data auditing before ingestion, normalized relational modeling in Amazon RDS, idempotent ETL design, deterministic Gold-layer aggregations, and a strictly defined canonical JSON contract. Rather than relying on the LLM to interpret raw or semi-structured data, the architecture ensures that all business logic, aggregation rules, and temporal comparisons are resolved upstream — preserving analytical correctness and reproducibility.
 
-The hybrid approach balances personalization, coverage, and cross-sell opportunities, reflecting real-world practices adopted by large-scale e-commerce platforms.
+By executing the final stage inside AWS using Amazon S3 and Amazon Bedrock, the system transitions from a traditional data platform into a structured generative analytics engine. The run-once deployment validates real cloud integration while maintaining cost efficiency, proving that the architecture is portable, reproducible, and ready for automation. What began as personal training and nutrition logs was transformed into a deterministic, model-consistent, and LLM-optimized analytical system — built with the rigor expected in professional Data Engineering and Analytics Engineering environments.
 
 ---
 
@@ -1155,6 +2439,6 @@ The hybrid approach balances personalization, coverage, and cross-sell opportuni
 
 Access all code, datasets, notebooks, and files for this project:
 
-[Click here to access](https://github.com/FerreiraGabrielw/ds-recomendation-system-deploy){target="_blank" rel="noopener noreferrer"}
+[Click here to access](https://github.com/FerreiraGabrielw/fitness-data-api-llm){target="_blank" rel="noopener noreferrer"}
 
 ---
