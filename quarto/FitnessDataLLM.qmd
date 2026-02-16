@@ -1,5 +1,5 @@
 ---
-title: "End-to-End Fitness Analytics Platform (LLM-Ready)"
+title: "Fitness Analytics Platform +LLM (End-to-End)"
 author: "Gabriel Ferreira"
 date: "2026-02-12"
 format:
@@ -2336,7 +2336,7 @@ The JSON contract represents the formal boundary between structured analytical d
 
 Because the contract is independent of any specific model provider, it can be stored in S3, consumed by Amazon Bedrock, OpenAI models, or any future inference endpoint without requiring changes to the data layer. This separation of concerns ensures that the analytical infrastructure remains stable even as the AI layer evolves.
 
-# Stage 7 — AWS Execution
+# Stage 7: AWS Execution
 
 After the relational modeling, Gold-layer aggregation, and canonical JSON generation were completed, the final stage of the project was executed entirely within the AWS ecosystem.
 
@@ -2399,7 +2399,7 @@ In the recorded demonstration:
 * The Amazon Bedrock Playground was opened
 * A Claude model was selected
 * The canonical JSON payload was inserted as structured context
-* A carefully engineered analytical prompt was defined
+* A engineered analytical prompt was defined
 * The model generated a weekly performance report
 * The result was reviewed and validated against the structured input
 
@@ -2431,7 +2431,7 @@ The execution was run-once to minimize cloud costs, but the architecture fully s
 
 This project demonstrates the full construction of an end-to-end analytical data platform, starting from raw operational CSV exports and evolving into a cloud-executed, AI-ready reporting system. Every stage was deliberately engineered with production principles in mind: explicit data auditing before ingestion, normalized relational modeling in Amazon RDS, idempotent ETL design, deterministic Gold-layer aggregations, and a strictly defined canonical JSON contract. Rather than relying on the LLM to interpret raw or semi-structured data, the architecture ensures that all business logic, aggregation rules, and temporal comparisons are resolved upstream — preserving analytical correctness and reproducibility.
 
-By executing the final stage inside AWS using Amazon S3 and Amazon Bedrock, the system transitions from a traditional data platform into a structured generative analytics engine. The run-once deployment validates real cloud integration while maintaining cost efficiency, proving that the architecture is portable, reproducible, and ready for automation. What began as personal training and nutrition logs was transformed into a deterministic, model-consistent, and LLM-optimized analytical system — built with the rigor expected in professional Data Engineering and Analytics Engineering environments.
+By executing the final stage inside AWS using Amazon S3 and Amazon Bedrock, the system transitions from a traditional data platform into a structured generative analytics engine. The run-once deployment validates real cloud integration while maintaining cost efficiency, proving that the architecture is portable, reproducible, and ready for automation. What began as personal training and nutrition logs was transformed into a deterministic, model-consistent, and LLM-optimized analytical system.
 
 ---
 
