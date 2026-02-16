@@ -1,0 +1,56 @@
+ 🔹 POST 11 — RUN-ONCE ARCHITECTURE & COST AWARENESS
+
+EN:
+
+Not every data project needs to run 24/7.
+
+This one doesn’t.
+
+The entire platform was designed to run on demand:
+
+- Load data
+- Generate analytics
+- Produce a canonical JSON
+- Let an LLM analyze it
+- Shut everything down
+
+No always-on services.
+No idle infrastructure.
+No hidden costs.
+
+This forced every decision to be intentional:
+
+- What truly needs persistence
+- What can be recomputed
+- What is execution-time only
+
+Cost awareness is not an optimization step.
+It’s an architectural principle.
+
+
+PT:
+
+Nem todo projeto de dados precisa rodar 24/7.
+
+Este não precisa.
+
+Toda a plataforma foi pensada para execução sob demanda:
+
+- Carregar dados
+- Gerar métricas
+- Produzir um JSON canônico
+- Permitir análise por LLM
+- Desligar tudo em seguida
+
+Sem serviços sempre ativos.
+Sem infraestrutura ociosa.
+Sem custos escondidos.
+
+Isso força decisões conscientes:
+
+- O que realmente precisa ser persistido
+- O que pode ser reprocessado
+- O que existe apenas no momento da execução
+
+Consciência de custo não é otimização.
+É princípio de arquitetura.

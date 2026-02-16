@@ -1,0 +1,1160 @@
+---
+title: "End-to-End Fitness Analytics Platform (LLM-Ready)"
+author: "Gabriel Ferreira"
+date: "2026-02-12"
+format:
+  html:
+    page-layout: full
+    code-fold: true
+    code-summary: "Show Code"
+    toc: true
+    toc-depth: 1
+    toc-title: "Project Index"
+    anchor-sections: false
+engine: jupytern
+jupyter: python3
+---
+
+# Introduction
+
+This project implements a complete end-to-end data engineering pipeline for strength training and nutrition data.
+
+The objective was to design a production-style analytical data system capable of:
+
+- Auditing and validating raw operational data
+- Modeling relationally in PostgreSQL
+- Executing idempotent ETL pipelines
+- Producing deterministic weekly aggregations
+- Generating a canonical JSON contract for LLM consumption
+- Running in AWS under a controlled, run-once, low-cost architecture
+
+---
+
+# Architecture Overview
+
+Raw CSV (Hevy + Diet)
+↓
+Cleaning & Validation (Silver)
+↓
+PostgreSQL (Normalized Schema)
+↓
+Gold Weekly Views
+↓
+Canonical JSON Contract
+↓
+Amazon Bedrock (LLM Analysis)
+
+
+The system was designed for **deterministic weekly reproducibility**.
+
+---
+
+# 3. Data Sources
+
+## 3.1 Workout Data (Hevy)
+
+- Format: CSV export
+- Granularity: 1 row = 1 set
+- Historical coverage: 2023–2026
+- Total rows: 9542
+- Total unique exercises: 118
+
+## 3.2 Diet Data
+
+- Source: SQLite → CSV export
+- Granularity: 1 row per day
+- Includes:
+  - Macros
+  - Calories
+  - Cardio volume
+  - Bodyweight
+  - Cycle classification
+
+---
+
+# 4. Stage 1 — Raw Workout Data Audit
+
+Before modeling or automation, a full exploratory and quality audit was conducted.
+
+```{python}
+#| include: false
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import plotly.express as px
+```
+
+##### Iinitial Load:
+```{python}
+df = pd.read_csv('hevy_workouts_raw.csv')
+df.shape
+```
+
+##### Sample:
+```{python}
+df.head(10)
+```
+
+##### Types:
+```{python}
+df.dtypes
+```
+
+##### Columns:
+```{python}
+df.columns
+```
+
+There is no need to capture the training start and end times along with the date; therefore, we must split them into a column for the training date (training_date) and another for the training duration (derived from start_time and end_time).
+
+### EDA - Exploratory Data Analysis
+
+##### Checking Missing Values:
+```{python}
+valores_ausentes = df.isnull().sum().sort_values(ascending = False)
+print(valores_ausentes)
+```
+
+- superset_id: Never used; consistently contains null values.
+- rpe: Same status as superset_id (all values missing).
+- distance_km: Only applicable for treadmill workouts; usually null as I track by time.
+- duration_seconds: Cardio duration; only present in cardio exercises.
+- exercise_notes: Exercise-specific comments; optional/not always required.
+- description: Training session description added upon completion; also optional.
+- weight_kg: Null for bodyweight exercises and cardio (no load).
+- reps: To be analyzed.
+
+##### weight_kg column missing values where 'weight_kg' is NaN and exercise type is not cardio:
+```{python}
+exercicios_excluidos = ['Treadmill', 'Stair Machine (Floors)', 'Stair Machine (Steps)', 'Stair Machine','Spinning', 'Walking', 'Air Bike']
+
+linhas_ausentes_carga = df[
+    df['weight_kg'].isna() &
+    ~df['exercise_title'].isin(exercicios_excluidos)
+]
+linhas_ausentes_carga
+```
+
+#### Visualizing missing value distribution:
+```{python}
+linhas_ausentes_carga = df[
+    df['weight_kg'].isna() &
+    ~df['exercise_title'].isin(exercicios_excluidos)
+]
+linhas_ausentes_carga['exercise_title'].value_counts()
+```
+
+Missing values for Back Extension (Hyperextension), Pull Up, Knee Raise Parallel Bars, Leg Raise Parallel Bars, Bench Dip, Decline Crunch, Chin Up, Chest Dip (Assisted), Romanian Chair Sit Ups, Decline Crunch (Weighted), Squat (Bodyweight), Push Up, and Plank are expected as these are bodyweight exercises. However, Bicep Curl (Machine) should not have missing values, and Squat (Smith Machine) was likely a zero-load warm-up, but we will investigate further.
+
+#### Filtering these two exercises with null values in weight_kg:
+```{python}
+exercicios_interesse = [
+    'Squat (Smith Machine)',
+    'Bicep Curl (Machine)'
+]
+
+df[
+    df['weight_kg'].isna() &
+    df['exercise_title'].isin(exercicios_interesse)
+]
+```
+
+We confirmed the Smith Machine was a warm-up, but there is likely an error in the bicep exercise, as it is a set to failure and the set_index is 2, meaning it is the third set of this exercise.
+
+#### Analyzing exactly this exercise on this specific date:
+```{python}
+df[
+    (df['title'] == 'Costas + Biceps + Lombar - Treino 2') &
+    (df['exercise_title'] == 'Bicep Curl (Machine)') &
+    (df['start_time'].str.contains('14 May 2024'))
+]
+```
+
+After analysis, we confirmed a manual entry error, resulting in the missing value; the correct value is 54.0 kg.
+
+##### Imputing the correct value for this set:
+```{python}
+df.loc[6644, 'weight_kg'] = 54.0
+```
+
+##### reps column missing values where 'reps' is NaN and exercise type is not cardio:
+```{python}
+exercicios_excluidos = ['Treadmill', 'Stair Machine (Floors)', 'Stair Machine (Steps)', 'Stair Machine','Spinning', 'Walking', 'Air Bike']
+
+linhas_ausentes_repeticoes = df[
+    df['reps'].isna() &
+    ~df['exercise_title'].isin(exercicios_excluidos)
+]
+
+linhas_ausentes_repeticoes
+```
+
+Plank is also an exercise where the absence of repetitions is expected and acceptable
+
+### Outlier Detectition
+
+##### Function to detect outliers using the IQR (Interquartile Range) method:
+```{python}
+def detectar_outliers(df, coluna):
+    Q1 = df[coluna].quantile(0.25)
+    Q3 = df[coluna].quantile(0.75)
+    IQR = Q3 - Q1
+    limite_inferior = Q1 - 1.5 * IQR
+    limite_superior = Q3 + 1.5 * IQR
+    
+    outliers = df[(df[coluna] < limite_inferior) | (df[coluna] > limite_superior)]
+    return outliers
+```
+
+##### Detecting and displaying total outliers per column:
+```{python}
+colunas = ['weight_kg', 'reps']
+for coluna in colunas:
+    outliers = detectar_outliers(df, coluna)
+    print(f"Total de outliers em '{coluna}': {len(outliers)}")
+```
+
+##### Detect and display outliers for the 'weight_kg' column:
+```{python}
+outliers_carga_kg = detectar_outliers(df, 'weight_kg')
+
+if not outliers_carga_kg.empty:
+    print("Outliers em 'weight_kg (119) ':")
+    print(outliers_carga_kg[['exercise_title', 'start_time', 'weight_kg', 'reps']])
+```
+
+##### Groups and counts how many outliers there are by exercise title:
+```{python}
+# 1. Detecta todos os outliers novamente
+outliers_original = detectar_outliers(df, 'weight_kg')
+# 2. Agrupa e conta quantos outliers existem por título de exercício
+contagem_outliers = outliers_original['exercise_title'].value_counts()
+print("Distribuição de Outliers por Exercício:")
+print(contagem_outliers)
+```
+
+Legpress is an exercise where the absolute weight is significantly higher compared to the other exercises but they are not necessarily outliers
+
+##### Leg Press (Machine) visualization:
+```{python}
+exercise_name = "Leg Press (Machine)"
+df_ex = df[df["exercise_title"] == exercise_name]
+fig = px.box(df_ex,y="weight_kg",points="all",hover_data=["reps","set_index","set_type","rpe","start_time"],title=f"Weight Distribuiton — {exercise_name}")
+fig.update_layout(yaxis_title="Weight",xaxis_title="",showlegend=False,height=600,width=900,title_x = 0.5)
+fig.show()
+```
+
+Correct values. Since my training is based on progressive overload, it makes sense that values close to 280 kg have few records, as they represent the most recent loads lifted.
+
+##### Detect and display outliers for the 'reps' column:
+```{python}
+outliers_repeticoes = detectar_outliers(df, 'reps')
+
+if not outliers_repeticoes.empty:
+    print("Outliers em 'repeticoes (209) ':")
+    print(outliers_repeticoes[['exercise_title','weight_kg', 'reps']])
+```
+
+##### Group and count outliers per exercise title:
+```{python}
+outliers_original = detectar_outliers(df, 'reps')
+
+# 2. Agrupa e conta quantos outliers existem por título de exercício
+contagem_outliers = outliers_original['exercise_title'].value_counts()
+
+print("Distribuição de Outliers por Exercício:")
+print(contagem_outliers)
+```
+
+##### # Para Standing Calf Raise (Machine):
+```{python}
+exercise_name = "Standing Calf Raise (Machine)"
+df_ex = df[df["exercise_title"] == exercise_name]
+fig = px.box(df_ex,y="reps",points="all",hover_data=["reps","weight_kg","set_index","set_type","rpe","start_time"],title=f"Reps Distribuiton — {exercise_name}")
+fig.update_layout(yaxis_title="Reps",xaxis_title="",showlegend=False,height=600,width=900,title_x = 0.5)
+fig.show()
+```
+
+We evaluated all exercises flagged as outliers and the majority (as seen in the example above) were warm-up sets where no load or a very low load was used; therefore, they do not qualify as incorrect data. The only exception was the Preacher Curl (Machine), detailed below, which indeed contained a manual entry error in the number of repetitions and was handled separately.
+
+##### # Preacher Curl (Machine):
+```{python}
+exercise_name = "Preacher Curl (Machine)"
+df_ex = df[df["exercise_title"] == exercise_name]
+fig = px.box(df_ex,y="reps",points="all",hover_data=["reps","weight_kg","set_index","set_type","rpe","start_time"],title=f"Reps Distribuiton — {exercise_name}")
+fig.update_layout(yaxis_title="Reps",xaxis_title="",showlegend=False,height=600,width=900,title_x = 0.5)
+fig.show()
+```
+
+Here we have an incorrect value: where 111 is recorded, it should actually be 11 repetitions
+
+##### # Analyzing this specific exercise instance:
+```{python}
+df[
+    (df['exercise_title'] == 'Preacher Curl (Machine)') &
+    (df['start_time'].str.contains('23 Jan 2024'))
+]
+```
+
+##### Imputing the correct value for this set:
+```{python}
+df.loc[8605, 'reps'] = 11.0
+```
+
+##### Revalidating the corrected set:
+```{python}
+df[
+    (df['exercise_title'] == 'Preacher Curl (Machine)') &
+    (df['start_time'].str.contains('23 Jan 2024'))
+]
+```
+
+### Validations
+
+##### set_index:
+```{python}
+# Ordenando para garantir consistência
+df_sorted = df.sort_values(
+    by=["start_time", "exercise_title", "set_index"]
+)
+
+# Agrupando por treino + exercício
+set_index_check = (
+    df_sorted
+    .groupby(["start_time", "exercise_title"])["set_index"]
+    .apply(list)
+    .reset_index(name="set_index_list")
+)
+
+# Funções de validação
+def starts_with_zero(seq):
+    return min(seq) == 0
+
+def has_gaps(seq):
+    return sorted(seq) != list(range(min(seq), max(seq) + 1))
+
+# Aplicando validações
+set_index_check["starts_with_zero"] = set_index_check["set_index_list"].apply(starts_with_zero)
+set_index_check["has_gaps"] = set_index_check["set_index_list"].apply(has_gaps)
+
+# Casos problemáticos
+problemas_set_index = set_index_check[
+    (~set_index_check["starts_with_zero"]) |
+    (set_index_check["has_gaps"])
+]
+
+print(f"Total de exercícios analisados: {len(set_index_check)}")
+print(f"Casos com problemas de set_index: {len(problemas_set_index)}")
+
+problemas_set_index.head()
+```
+
+##### Workout Duration:
+```{python}
+# Convertendo para datetime
+df["start_time_dt"] = pd.to_datetime(df["start_time"], format="%d %b %Y, %H:%M")
+df["end_time_dt"] = pd.to_datetime(df["end_time"], format="%d %b %Y, %H:%M")
+
+# Calculando duração em minutos
+df["duracao_treino_min"] = (
+    (df["end_time_dt"] - df["start_time_dt"])
+    .dt.total_seconds() / 60
+)
+
+# Agregando por treino (um treino pode ter várias linhas)
+duracao_por_treino = (
+    df.groupby(["title", "start_time"])
+    .agg(
+        duracao_min=("duracao_treino_min", "first")
+    )
+    .reset_index()
+)
+
+# Treinos muito longos (> 4 horas)
+treinos_longos = duracao_por_treino[
+    duracao_por_treino["duracao_min"] > 240
+]
+
+# Treinos muito curtos (< 10 minutos)
+treinos_curtos = duracao_por_treino[
+    duracao_por_treino["duracao_min"] < 10
+]
+
+print(f"Treinos > 4h: {len(treinos_longos)}")
+print(f"Treinos < 10min: {len(treinos_curtos)}")
+
+treinos_longos.head(), treinos_curtos.head()
+```
+
+##### Naming Consistency:
+```{python}
+
+# Total de exercícios únicos
+exercicios_unicos = df["exercise_title"].nunique()
+
+# Frequência por exercício
+freq_exercicios = df["exercise_title"].value_counts()
+
+# Exercícios que aparecem apenas 1 vez
+exercicios_uma_vez = freq_exercicios[freq_exercicios == 1]
+
+print(f"Total de exercícios únicos: {exercicios_unicos}")
+print(f"Exercícios que aparecem apenas 1 vez: {len(exercicios_uma_vez)}")
+
+exercicios_uma_vez.head(10)
+```
+
+### Analysis
+
+##### Workouts per day:
+```{python}
+# Treinos por dia
+df["data_treino"] = df["start_time_dt"].dt.date
+
+treinos_por_dia = (
+    df.groupby("data_treino")["title"]
+    .nunique()
+    .reset_index(name="qtde_treinos")
+)
+
+fig = px.bar(
+    treinos_por_dia,
+    x="data_treino",
+    y="qtde_treinos",
+    title="Frequência de Treinos ao Longo do Tempo"
+)
+
+fig.update_layout(
+    xaxis_title="Data",
+    yaxis_title="Quantidade de Treinos",
+    title_x=0.5,
+    height=500
+)
+
+fig.show()
+```
+
+##### Load progression - Exercise: Seated Leg Curl (Machine):
+```{python}
+exercise_name = "Seated Leg Curl (Machine)"
+
+df_ex = (
+    df[df["exercise_title"] == exercise_name]
+    .groupby("data_treino")
+    .agg(carga_max=("weight_kg", "max"))
+    .reset_index()
+)
+
+fig = px.line(
+    df_ex,
+    x="data_treino",
+    y="carga_max",
+    markers=True,
+    title=f"Progressão de Carga — {exercise_name}"
+)
+
+fig.update_layout(
+    xaxis_title="Data",
+    yaxis_title="Carga Máxima (kg)",
+    title_x=0.5,
+    height=500
+)
+
+fig.show()
+```
+
+##### Load progression - Exercise: Chest Fly (Machine):
+```{python}
+exercise_name = "Chest Fly (Machine)"
+
+df_ex = (
+    df[df["exercise_title"] == exercise_name]
+    .groupby("data_treino")
+    .agg(carga_max=("weight_kg", "max"))
+    .reset_index()
+)
+
+fig = px.line(
+    df_ex,
+    x="data_treino",
+    y="carga_max",
+    markers=True,
+    title=f"Progressão de Carga — {exercise_name}"
+)
+
+fig.update_layout(
+    xaxis_title="Data",
+    yaxis_title="Carga Máxima (kg)",
+    title_x=0.5,
+    height=500
+)
+
+fig.show()
+```
+
+##### Scatter plot: weight vs. rep:
+```{python}
+fig = px.scatter(
+    df,
+    x="weight_kg",
+    y="reps",
+    color="set_type",
+    opacity=0.6,
+    title="Relação entre Carga e Repetições",
+    hover_data=["exercise_title", "data_treino"]
+)
+
+fig.update_layout(
+    xaxis_title="Carga (kg)",
+    yaxis_title="Repetições",
+    title_x=0.5,
+    height=600
+)
+
+fig.show()
+```
+
+##### Workout duration histogram:
+```{python}
+fig = px.histogram(
+    duracao_por_treino,
+    x="duracao_min",
+    nbins=30,
+    title="Distribuição da Duração dos Treinos (min)"
+)
+
+fig.update_layout(
+    xaxis_title="Duração (min)",
+    yaxis_title="Quantidade de Treinos",
+    title_x=0.5,
+    height=500
+)
+
+fig.show()
+```
+
+##### Most frequent exercises:
+```{python}
+top_exercicios = (
+    df["exercise_title"]
+    .value_counts()
+    .head(15)
+    .reset_index()
+)
+
+top_exercicios.columns = ["exercise_title", "frequencia"]
+
+fig = px.bar(
+    top_exercicios,
+    x="frequencia",
+    y="exercise_title",
+    orientation="h",
+    title="Top 15 Exercícios Mais Frequentes"
+)
+
+fig.update_layout(
+    xaxis_title="Número de Séries",
+    yaxis_title="",
+    title_x=0.5,
+    height=600
+)
+
+fig.show()
+```
+
+##### Set types (distribution):
+```{python}
+fig = px.pie(
+    df,
+    names="set_type",
+    title="Distribuição dos Tipos de Série"
+)
+
+fig.update_layout(
+    title_x=0.5,
+    height=500
+)
+
+fig.show()
+```
+
+##### Training volume:
+```{python}
+# Garantindo a coluna de data
+df["data_treino"] = df["start_time_dt"].dt.date
+
+# Cada linha representa uma série → volume = contagem de linhas
+volume_series_diario = (
+    df.groupby("data_treino")
+    .size()
+    .reset_index(name="total_series")
+)
+
+fig = px.line(
+    volume_series_diario,
+    x="data_treino",
+    y="total_series",
+    markers=True,
+    title="Volume de Treino por Dia (Número de Séries)"
+)
+
+fig.update_layout(
+    xaxis_title="Data",
+    yaxis_title="Total de Séries",
+    title_x=0.5,
+    height=500
+)
+
+fig.show()
+```
+
+##### Set voulme by type:
+```{python}
+df["data_treino"] = df["start_time_dt"].dt.date
+
+df_efetivas = df[df["set_type"].isin(["normal", "failure"])]
+
+volume_por_tipo = (
+    df_efetivas
+    .groupby(["data_treino", "set_type"])
+    .size()
+    .reset_index(name="total_series")
+)
+
+fig = px.area(
+    volume_por_tipo,
+    x="data_treino",
+    y="total_series",
+    color="set_type",
+    title="Volume de Séries por Tipo"
+)
+
+fig.update_layout(
+    xaxis_title="Data",
+    yaxis_title="Total de Séries",
+    title_x=0.5,
+    height=500
+)
+
+fig.show()
+```
+
+##### Final Dataset Export (Silver Layer):
+```{python}
+df.to_csv("hevy_workouts_clean.csv",index=False,encoding="utf-8")
+```
+
+# Stage 2 Diet Data Audit
+
+Before integrating nutrition data into the relational model, a full validation and structural audit was performed on the exported dataset from my personal SQLite database.
+
+The objective of this stage was to:
+
+* Validate structural integrity
+* Ensure domain consistency
+* Confirm macro–calorie coherence
+* Normalize cycle identification
+* Produce an immutable clean dataset for ingestion
+
+##### Initial Load:
+```{python}
+pd.set_option("display.max_rows", 200)
+pd.set_option("display.max_colwidth", None)
+df = pd.read_csv("diet_daily_raw_export.csv")
+df.head()
+```
+
+##### Shape:
+```{python}
+df.shape
+```
+
+##### Structural Overview:
+```{python}
+df.info()
+```
+
+Observations:
+
+* No missing values in numeric macro columns
+* observacoes is optional (notes field)
+* data initially loaded as object (string)
+* cicle stored as free-text categorical field
+
+##### Granularity validation:
+```{python}
+df.duplicated(subset=["data"]).sum()
+```
+
+This confirms the dataset respects the intended grain:
+
+1 row = 1 day
+
+##### Date conversion:
+```{python}
+df["data"] = pd.to_datetime(df["data"], errors="coerce")
+df[df["data"].isna()]
+```
+
+No invalid dates detected.
+
+This confirms full temporal integrity.
+
+##### Missing Values Audit:
+```{python}
+df.isna().sum()
+```
+
+* All macro and calorie fields fully populated
+* observacoes contains null values (expected and acceptable)
+* No missing bodyweight records
+* No missing cycle classification
+* No unexpected structural gaps were found.
+
+#### Domain Validations:
+##### Negative Value Check:
+```{python}
+numeric_cols = [
+    "carboidratos_g",
+    "proteinas_g",
+    "gorduras_g",
+    "kcal",
+    "cardio_semanal_min",
+    "peso_kg"
+]
+
+(df[numeric_cols] < 0).sum()
+```
+
+All zero.
+
+No invalid negative values exist in:
+
+* Macros
+* Calories
+* Weekly cardio
+* Bodyweight
+
+##### Caloric Consistency Validation:
+
+Calories were validated against macro-derived energy:
+
+* Carbs = 4 kcal/g
+* Protein = 4 kcal/g
+* Fat = 9 kcal/g
+```{python}
+df["kcal_estimado"] = (
+    df["carboidratos_g"] * 4 +
+    df["proteinas_g"] * 4 +
+    df["gorduras_g"] * 9
+)
+
+df[["kcal", "kcal_estimado"]].head(10)
+```
+
+##### Difference distribution:
+```{python}
+(df["kcal"] - df["kcal_estimado"]).abs().describe()
+```
+
+Findings:
+
+* Mean deviation ≈ 0.02 kcal
+* Maximum deviation: 20 kcal
+* 75% of records show zero difference
+
+#### Cycle Normalization:
+The cicle column contains descriptive strings combining:
+
+* Sequential cycle number
+* Strategy (Cutting, Bulking, Reverse, Maintenance)
+* Date range
+
+##### Unique values::
+```{python}
+df["cicle"].unique()
+```
+
+To normalize this for relational modeling, a deterministic mapping was created:
+##### Cyclpe map:
+```{python}
+cycle_map = {
+    "1Cutting I (01/05/2023 - 17/09/2023)": 1,
+    "2Reversa I (18/09/2023 - 29/10/2023)": 2,
+    "3Cutting II (30/10/2023 - 23/02/2024)": 3,
+    "4Reversa II (24/02/2024 - 22/03/2024)": 4,
+    "5Bulking I (23/03/2024 - 19/05/2024)": 5,
+    "6Cutting III (20/05/2024 - 28/09/2024)": 6,
+    "7Bulking II (28/10/2024 - 01/01/2025)": 7,
+    "8Cutting IV (02/01/2025 - 17/04/2025)": 8,
+    "9Manutenção I (18/04/2025 - 05/10/2025)": 9,
+    "10Cutting V (06/10/2025 - XX/XX/XXXX)": 10
+}
+
+df["cycle_id"] = df["cicle"].map(cycle_map)
+df[df["cycle_id"].isna()][["data", "cicle"]]
+```
+
+Result:
+
+No unmapped values.
+
+This guarantees referential integrity for the future cycles dimension table.
+
+#### Column Standardization:
+Columns were renamed to follow the project’s naming conventions:
+
+* English
+* Snake case
+* Explicit semantic meaning
+```{python}
+df = df.rename(columns={
+    "data": "diet_date",
+    "carboidratos_g": "carbs_g",
+    "proteinas_g": "protein_g",
+    "gorduras_g": "fat_g",
+    "kcal": "calories_kcal",
+    "cardio_seamanal_min": "cardio_weekly_min",
+    "peso_kg": "bodyweight_kg",
+    "observacoes": "notes"
+})
+df = df.drop(columns=["cicle", "kcal_estimado"])
+df = df.replace({np.nan: None})
+```
+
+##### Final Dataset Export (Silver Layer):
+```{python}
+df.to_csv(
+    "diet_daily_clean.csv",
+    index=False,
+    encoding="utf-8"
+)
+```
+
+# Stage 3 - Relational Modeling (Amazon RDS – PostgreSQL)
+
+After validating and cleaning both training and nutrition datasets, the next step was the implementation of a normalized relational model.
+
+This stage was executed in:
+
+> **Amazon RDS — PostgreSQL (Managed Database Service)**
+
+The objective was to:
+
+* Move from flat CSV structure to normalized relational modeling
+* Enforce referential integrity
+* Guarantee deterministic aggregations
+* Enable performant weekly analytics
+* Prepare the system for idempotent ETL ingestion
+
+## Infrastructure Context
+
+Database engine: PostgreSQL
+Deployment: Amazon RDS
+Schema: `fitness`
+Connection: SSL-enabled
+
+RDS was intentionally chosen to:
+
+* Simulate a production-style managed database
+* Avoid local-only architecture
+* Demonstrate cloud database provisioning
+* Keep operational overhead minimal
+
+This aligns with the project’s cloud-first design.
+
+**Database ER Diagram**
+
+![](fitenssDB-LLM.png)
+
+# Schema Definition
+
+The schema was explicitly defined to isolate all project objects.
+
+<details>
+<summary><strong>Show SQL Schema</strong></summary>
+
+```sql
+CREATE SCHEMA IF NOT EXISTS fitness;
+SET search_path TO fitness;
+```
+</details>
+
+This ensures:
+
+* Logical separation
+* Namespace clarity
+* Clean migration management
+
+---
+
+# Core Tables
+
+The modeling follows a normalized structure where:
+
+1 workout → many exercises
+1 exercise → many sets
+1 day → 1 diet record
+
+Foreign keys enforce consistency across all relationships.
+
+---
+
+## Table: exercises
+
+<details>
+<summary><strong>Show SQL Schema</strong></summary>
+
+```sql
+CREATE TABLE exercises (
+    exercise_id SERIAL PRIMARY KEY,
+    exercise_name TEXT NOT NULL UNIQUE,
+    exercise_type TEXT,
+    is_cardio BOOLEAN,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+</details>
+
+### Design Notes
+
+* `exercise_name` is UNIQUE to prevent duplication during ETL.
+* `is_cardio` allows future semantic filtering.
+* `exercise_type` reserved for future classification (not hardcoded yet).
+* Timestamp ensures traceability.
+
+This table acts as a dimension table for exercises.
+
+## Table: workouts
+
+<details>
+<summary><strong>Show SQL Schema</strong></summary>
+
+```sql
+CREATE TABLE workouts (
+    workout_id SERIAL PRIMARY KEY,
+    workout_name TEXT,
+    workout_date DATE NOT NULL,
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    duration_minutes NUMERIC(5,2),
+    description TEXT,
+    source TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+</details>
+
+### Design Notes
+
+* `workout_date` stored separately for aggregation performance.
+* `duration_minutes` precomputed to avoid runtime calculation overhead.
+* `source` explicitly tracks ingestion origin (e.g., hevy_csv).
+* Not enforcing uniqueness constraint intentionally — allows ingestion flexibility if future multi-source system is introduced.
+
+This table represents the training session grain.
+
+## Table: workout_exercises
+
+<details>
+<summary><strong>Show SQL Schema</strong></summary>
+
+```sql
+CREATE TABLE workout_exercises (
+    workout_exercise_id SERIAL PRIMARY KEY,
+    workout_id INT NOT NULL REFERENCES workouts(workout_id) ON DELETE CASCADE,
+    exercise_id INT NOT NULL REFERENCES exercises(exercise_id),
+    exercise_order INT,
+    superset_id INT,
+    notes TEXT
+);
+```
+</details>
+
+### Design Notes
+
+This is a bridge table resolving:
+
+* Many exercises per workout
+* Exercise order inside workout
+* Superset grouping
+
+`ON DELETE CASCADE` ensures:
+
+* Deleting a workout automatically deletes dependent records.
+
+This avoids orphan data.
+
+## Table: sets
+<details>
+<summary><strong>Show SQL Schema</strong></summary>
+
+```sql
+CREATE TABLE sets (
+    set_id SERIAL PRIMARY KEY,
+    workout_exercise_id INT NOT NULL REFERENCES workout_exercises(workout_exercise_id) ON DELETE CASCADE,
+    set_index INT NOT NULL,
+    set_type TEXT,
+    weight_kg NUMERIC(6,2),
+    reps INT,
+    distance_km NUMERIC(6,3),
+    duration_seconds INT,
+    rpe NUMERIC(3,1),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+</details>
+
+### Design Notes
+
+This is the most granular fact table.
+
+Grain:
+
+> 1 row = 1 set
+
+Key decisions:
+
+* Numeric precision defined explicitly
+* `set_type` not constrained via ENUM to allow ingestion flexibility
+* No derived metrics stored (volume, 1RM etc.)
+* RPE stored but not enforced
+
+All analytical metrics will be calculated in Gold layer views.
+
+## Performance Indexes
+
+Indexes were created to optimize common aggregation paths.
+
+
+<details>
+<summary><strong>Show SQL Schema</strong></summary>
+
+```sql
+CREATE INDEX idx_workouts_date ON workouts(workout_date);
+CREATE INDEX idx_exercises_name ON exercises(exercise_name);
+CREATE INDEX idx_sets_type ON sets(set_type);
+CREATE INDEX idx_sets_workout_exercise ON sets(workout_exercise_id);
+```
+</details>
+
+### Index Strategy
+
+* `workout_date` → weekly aggregations
+* `exercise_name` → lookup & joins
+* `set_type` → filtering warmups/failure sets
+* `workout_exercise_id` → join optimization
+
+Indexes were added intentionally after understanding expected query patterns.
+
+## Nutrition Table
+
+<details>
+<summary><strong>Show SQL Schema</strong></summary>
+
+```sql
+CREATE TABLE diet_daily (
+    diet_date DATE PRIMARY KEY,
+
+    carbs_g INT,
+    protein_g INT,
+    fat_g INT,
+
+    calories_kcal INT,
+
+    cardio_weekly_min INT,
+
+    cycle_id INT
+        REFERENCES cycles(cycle_id),
+
+    bodyweight_kg NUMERIC(5,2),
+
+    notes TEXT,
+
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+</details>
+
+### Design Notes
+
+Grain:
+
+> 1 row = 1 day
+
+Key decisions:
+
+* `diet_date` is PRIMARY KEY → prevents duplicates
+* `cycle_id` references a dimension table (`cycles`)
+* No macro-derived metrics stored
+* `cardio_weekly_min` kept at daily level for consistency with original structure
+
+This table enables:
+
+* Weekly averages
+* Cycle segmentation
+* Cross-analysis with training
+
+# Referential Integrity Strategy
+
+Foreign keys were enforced in:
+
+* workout_exercises → workouts
+* workout_exercises → exercises
+* sets → workout_exercises
+* diet_daily → cycles
+
+This guarantees:
+
+* No orphan sets
+* No unmapped exercises
+* No diet record without valid cycle
+
+The model prevents silent corruption.
+
+
+
+
+
+
+<details>
+<summary><strong>Show SQL Schema</strong></summary>
+
+```sql
+CREATE DATABASE IF NOT EXISTS ecommerce_db
+DESCRIBE product_views;
+```
+</details>
+
+
+
+##### Function:
+```{python}
+
+```
+
+
+
+
+##### Execution of initial exploratory queries:
+
+{{< video SQL-QUERIES.mp4 >}}
+
+---
+
+# Project Conclusion
+
+This project demonstrates the construction of a hybrid recommender system that is interpretable and production-oriented, combining technical rigor with direct business impact.
+
+The hybrid approach balances personalization, coverage, and cross-sell opportunities, reflecting real-world practices adopted by large-scale e-commerce platforms.
+
+---
+
+## GitHub Repository
+
+Access all code, datasets, notebooks, and files for this project:
+
+[Click here to access](https://github.com/FerreiraGabrielw/ds-recomendation-system-deploy){target="_blank" rel="noopener noreferrer"}
+
+---

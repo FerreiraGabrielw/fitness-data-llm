@@ -1,0 +1,41 @@
+🔹 POST 13 — PROJECT CLOSED, ENGINEERING COMPLETE
+
+EN:
+
+This project is now finished.
+
+Not because there’s nothing else to build —
+but because the engineering goals were met.
+
+- Real data
+- Clean modeling
+- Idempotent pipelines
+- Meaningful analytics
+- LLM-ready data contracts
+- Conscious infrastructure usage
+
+At some point, adding more features stops adding value.
+
+Closing a project is also an engineering decision.
+
+Knowing -when- to stop is part of building things well.
+
+PT:
+
+Este projeto está oficialmente encerrado.
+
+Não porque não haja mais o que construir —
+mas porque os objetivos de engenharia foram cumpridos.
+
+- Dados reais
+- Modelagem limpa
+- Pipelines idempotentes
+- Métricas com significado
+- Contratos prontos para LLM
+- Uso consciente de infraestrutura
+
+Em algum momento, adicionar mais coisas deixa de gerar valor.
+
+Encerrar um projeto também é uma decisão técnica.
+
+Saber quando parar faz parte de construir bem.
