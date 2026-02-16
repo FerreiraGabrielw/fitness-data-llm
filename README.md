@@ -1,219 +1,123 @@
-# fitness-data-api-llm
-Hevy API + Nutrition Data + LLM
-Testee
---
+### ➡️ Full and Detailed Documentation in My Portfolio  
+[Access the complete project page here](https://ferreiragabrielw.github.io/portfolio-gabriel/projetos/DataEngineering/1FitnessLLM/FitnessDataLLM.html)
 
-# 📌 Roadmap E2E — *fitness-data-platform*
+# End-to-End Fitness Analytics Platform (LLM-Ready)
 
-> **Objetivo:** Construir uma plataforma de dados ponta a ponta para análise de treino e dieta, com ingestão histórica via CSV, ingestão incremental via API, banco relacional, análises, automação e relatórios com LLM na AWS.
+Production-style data engineering project transforming raw strength training and diet data into a cloud-executed, LLM-consumable analytical system.
 
 ---
 
-## 🔹 FASE 0 — Preparação (agora)
+##  Overview
 
-### ✅ Congelar o dataset tratado
+This project implements a complete end-to-end data pipeline:
 
----
+Raw CSV (Hevy + Diet)
+→ Data Audit & Cleaning (Silver)
+→ PostgreSQL (Amazon RDS)
+→ Gold Weekly Aggregations
+→ Canonical JSON Contract
+→ Amazon Bedrock (Claude) Inference
 
-## 🔹 FASE 1 — Modelagem de Dados (engenharia)
-
-### 🎯 Objetivo
-
-Transformar um CSV achatado em um **modelo relacional escalável**, compatível com API futura.
-
-### 1.1 Definir entidades principais
-
-* Workout
-* Exercise
-* Set
-* Cardio (ou exercício com tempo/distância)
-* Calendar (dimensão de tempo)
-
-### 1.2 Definir granularidade de cada tabela
-
-* Qual tabela é por treino?
-* Qual é por exercício?
-* Qual é por série?
-
-### 1.3 Definir chaves
-
-* Primary Keys
-* Foreign Keys
-* Natural vs Surrogate Keys
-
-### 1.4 Criar diagrama lógico (ERD)
-
-* Mesmo que simples (draw.io / dbdiagram)
-* Esse diagrama vira **documentação central**
+The system is deterministic, idempotent, and cloud-portable.
 
 ---
 
-## 🔹 FASE 2 — Banco de Dados (AWS)
+##  Architecture
 
-### 🎯 Objetivo
+**Data Sources**
 
-Criar um banco PostgreSQL produtivo e barato.
+* Hevy workout CSV (1 row = 1 set)
+* Diet daily export (SQLite → CSV)
 
-### 2.1 Criar RDS PostgreSQL (Free Tier)
+**Data Stack**
 
-* Região: us-east-1
-* db.t3.micro
-* Storage mínimo
-* Security Group restrito
-
-### 2.2 Criar schema no banco
-
-* Criar tabelas conforme modelagem
-* Criar índices essenciais
-* Garantir integridade referencial
-
-📌 **Checkpoint:** banco pronto e acessível
+* Python (Pandas, SQLAlchemy)
+* PostgreSQL (Amazon RDS)
+* Idempotent ETL pipeline
+* Gold analytical views
+* Canonical JSON schema (LLM-ready)
+* Amazon S3 + Amazon Bedrock
 
 ---
 
-## 🔹 FASE 3 — Pipeline de Ingestão (ETL)
+##  ETL Characteristics
 
-### 🎯 Objetivo
+* Idempotent execution
+* Explicit foreign key mapping
+* Deterministic ordering
+* Referential integrity enforced
+* Replay-safe design
 
-Automatizar ingestão do CSV e preparar para API futura.
-
-### 3.1 Ingestão histórica (CSV)
-
-* Python
-* pandas → SQLAlchemy
-* Inserção em ordem correta (dimensões → fatos)
-
-### 3.2 Validações no pipeline
-
-* Tipagem
-* Null checks
-* Constraints (FK)
-
-### 3.3 Separar camadas
-
-* Raw → Cleaned → Enriched (conceitualmente)
-* Banco guarda **cleaned**
-
-📌 **Checkpoint:** dados carregados no banco sem erro
+Repeated executions produce stable row counts and no duplicates.
 
 ---
 
-## 🔹 FASE 4 — Enriquecimento Analítico
+## Gold Layer
 
-### 🎯 Objetivo
+Weekly aggregations include:
 
-Criar métricas que NÃO existem no dado bruto.
+* Training sessions
+* Total and failure sets
+* Reps & load averages
+* Exercise progression (week-over-week deltas)
+* Diet integration
+* Cycle classification
 
-### 4.1 Criar tabelas derivadas ou views
-
-* 1RM
-* Volume (tonnage)
-* Séries efetivas
-* Progressão por exercício
-
-### 4.2 Integrar dados de dieta
-
-* Tabela dieta diária
-* Relacionar por data
-* Relacionar com treino
-
-### 4.3 Integrar aderência
-
-* Aderência treino
-* Aderência dieta
-
-📌 **Checkpoint:** banco analítico pronto
+All warmups excluded by design.
 
 ---
 
-## 🔹 FASE 5 — Análises e Visualizações
+## LLM Integration
 
-### 🎯 Objetivo
+A canonical JSON contract is generated per `week_start`, containing:
 
-Gerar insights claros e reproduzíveis.
+* Cycle context
+* Weekly diet metrics
+* Training overview
+* Exercise-level metrics
+* Deltas vs previous week
 
-### 5.1 Queries SQL analíticas
+The JSON is uploaded to Amazon S3 and analyzed in Amazon Bedrock (Claude).
 
-* Progressão por exercício
-* Volume semanal
-* Relação treino × dieta
-* Aderência × resultado
-
-### 5.2 Dashboards (opcional)
-
-* Python (Plotly)
-* ou Streamlit
-* ou notebook estruturado
-
-📌 **Checkpoint:** análises claras e replicáveis
+The model performs analytical reasoning only — no transformations or aggregations.
 
 ---
 
-## 🔹 FASE 6 — Automação (Orquestração)
+## AWS Execution
 
-### 🎯 Objetivo
+Run-once cloud validation:
 
-Rodar tudo automaticamente.
+* Amazon RDS (PostgreSQL)
+* Amazon S3 (JSON artifact storage)
+* Amazon Bedrock (LLM inference)
 
-### 6.1 Criar jobs
-
-* Ingestão diária (API no futuro)
-* Atualização de métricas semanais
-
-### 6.2 Ferramentas
-
-* AWS Lambda **ou**
-* Cron + EC2 pequena **ou**
-* Prefect / Airflow (se quiser elevar o nível)
-
-📌 **Checkpoint:** pipeline automático
+Designed for cost efficiency, but architecture supports future automation.
 
 ---
 
-## 🔹 FASE 7 — LLM & Relatórios Inteligentes
+## Repository Structure
 
-### 🎯 Objetivo
-
-Gerar relatórios semanais interpretativos.
-
-### 7.1 Coletar métricas da semana
-
-* SQL → dataframe
-* Agregações chave
-
-### 7.2 Prompt engineering
-
-* Contexto de treino
-* Contexto de dieta
-* Comparação com semanas anteriores
-
-### 7.3 Output
-
-* Relatório em texto
-* Salvo em S3
-* (Opcional) enviado por e-mail
-
-📌 **Checkpoint:** relatório automático gerado por IA
+```
+fitness-data-api-llm/
+│
+├── data/
+├── etl/
+├── jupyter/
+├── llm/
+├── quarto/
+├── sql/
+└── README.md
+```
 
 ---
 
-## 🔹 FASE 8 — Documentação & Portfólio
+## Key Engineering Principles
 
-### 🎯 Objetivo
+* Data quality before modeling
+* Deterministic aggregations
+* Explicit schema contracts
+* LLM-optimized structure
+* Cloud portability
+* Production-oriented design
 
-Transformar isso em **case profissional**.
-
-### 8.1 README final
-
-* Arquitetura
-* Stack
-* Decisões técnicas
-* Prints de gráficos
-
-### 8.2 Diagrama de arquitetura AWS
-
-* S3
-* RDS
-* Lambda
-* LLM
-
+---
